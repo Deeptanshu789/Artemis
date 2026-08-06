@@ -1,0 +1,142 @@
+:root {
+  --bg: #0f1419;
+  --surface: #1a222c;
+  --border: #2e3d4f;
+  --text: #e8eef4;
+  --muted: #8b9aab;
+  --accent: #3d9a7a;
+  --danger: #c45c4a;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  width: 320px;
+  min-height: 400px;
+  margin: 0;
+  padding: 16px;
+  background: var(--bg);
+  color: var(--text);
+  font-family: "IBM Plex Sans", system-ui, sans-serif;
+  font-size: 13px;
+}
+
+h1 {
+  font-family: Fraunces, Georgia, serif;
+  font-size: 28px;
+  margin: 0;
+  font-weight: 600;
+}
+
+.tag {
+  margin: 4px 0 16px;
+  color: var(--muted);
+}
+
+#status-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--muted);
+}
+.dot.capturing,
+.dot.transcribing {
+  background: var(--accent);
+  animation: pulse 1.2s infinite;
+}
+.dot.scoring {
+  background: #c4a035;
+}
+.dot.ready {
+  background: var(--accent);
+}
+.dot.failed,
+.dot.error {
+  background: var(--danger);
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+
+.muted {
+  color: var(--muted);
+  min-height: 2.4em;
+}
+
+.error {
+  color: var(--danger);
+}
+
+.nudge {
+  color: #c4a035;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  padding: 8px;
+  border-radius: 4px;
+  margin: 0 0 12px;
+}
+
+#score {
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 40px;
+  margin: 8px 0;
+}
+
+#tips {
+  padding-left: 18px;
+  margin: 0 0 12px;
+  color: var(--muted);
+}
+
+#report {
+  color: var(--accent);
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+button {
+  flex: 1;
+  border: 1px solid var(--border);
+  background: var(--accent);
+  color: var(--bg);
+  font-weight: 600;
+  padding: 10px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+button.secondary {
+  background: var(--surface);
+  color: var(--text);
+}
+
+button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.privacy {
+  margin-top: 16px;
+  font-size: 11px;
+  color: var(--muted);
+}

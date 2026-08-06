@@ -1,0 +1,15 @@
+node_modules/
+dist/
+build/
+.env
+.env.local
+*.log
+.DS_Store
+apps/extension/dist/
+apps/dashboard/dist/
+apps/server/dist/
+packages/shared/dist/
+*.crx
+*.pem
+.vite/
+coverage/

@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Artemis Options</title>
+    <style>
+      :root {
+        --bg: #0f1419;
+        --text: #e8eef4;
+        --muted: #8b9aab;
+        --accent: #3d9a7a;
+        --border: #2e3d4f;
+        --surface: #1a222c;
+      }
+      body {
+        font-family: "IBM Plex Sans", system-ui, sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        max-width: 480px;
+        margin: 32px auto;
+        padding: 0 16px;
+      }
+      h1 {
+        font-family: Fraunces, Georgia, serif;
+        font-size: 28px;
+      }
+      label {
+        display: block;
+        margin-top: 16px;
+        font-size: 12px;
+        color: var(--muted);
+      }
+      input {
+        width: 100%;
+        margin-top: 6px;
+        padding: 10px;
+        border: 1px solid var(--border);
+        background: var(--surface);
+        color: var(--text);
+        border-radius: 4px;
+        box-sizing: border-box;
+      }
+      button {
+        margin-top: 20px;
+        background: var(--accent);
+        color: var(--bg);
+        border: none;
+        padding: 10px 16px;
+        font-weight: 600;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+      #status {
+        margin-top: 12px;
+        font-size: 13px;
+        color: var(--muted);
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Artemis</h1>
+    <p style="color: var(--muted)">API endpoints for this extension build.</p>
+    <label>API HTTP base <input id="apiHttp" /></label>
+    <label>API WebSocket URL <input id="apiWs" /></label>
+    <label>Dashboard URL <input id="dashboardUrl" /></label>
+    <button id="save" type="button">Save</button>
+    <p id="status"></p>
+    <script type="module" src="options.js"></script>
+  </body>
+</html>

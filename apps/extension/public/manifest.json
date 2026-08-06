@@ -1,0 +1,46 @@
+{
+  "manifest_version": 3,
+  "name": "Artemis Interview Copilot",
+  "version": "0.1.1",
+  "description": "Capture Meet audio, transcribe, and score interviewer performance.",
+  "permissions": ["tabCapture", "activeTab", "storage", "tabs", "scripting", "offscreen"],
+  "host_permissions": [
+    "https://meet.google.com/*",
+    "http://localhost:3001/*",
+    "ws://localhost:3001/*",
+    "http://*/*",
+    "https://*/*",
+    "ws://*/*",
+    "wss://*/*"
+  ],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Artemis",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "options_ui": {
+    "page": "options.html",
+    "open_in_tab": true
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://meet.google.com/*"],
+      "js": ["content.js"],
+      "css": ["banner.css"],
+      "run_at": "document_idle"
+    }
+  ]
+}

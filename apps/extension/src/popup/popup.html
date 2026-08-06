@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Artemis</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <header>
+      <h1>Artemis</h1>
+      <p class="tag">Interviewer quality, measured.</p>
+    </header>
+    <div id="status-row">
+      <span id="dot" class="dot idle"></span>
+      <span id="status-text">Idle</span>
+    </div>
+    <p id="transcript" class="muted"></p>
+    <p id="nudge" class="nudge" hidden></p>
+    <div id="result" hidden>
+      <div id="score"></div>
+      <ul id="tips"></ul>
+      <a id="report" href="#" target="_blank" rel="noopener">Open full report</a>
+    </div>
+    <p id="error" class="error" hidden></p>
+    <div class="actions">
+      <button id="start" type="button">Start listening</button>
+      <button id="stop" type="button" class="secondary" disabled>Stop</button>
+    </div>
+    <p class="privacy">Visible banner shown in Meet. Participants should consent to analysis.</p>
+    <script type="module" src="popup.js"></script>
+  </body>
+</html>

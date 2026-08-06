@@ -1,0 +1,29 @@
+{
+  "name": "artemis",
+  "version": "1.0.0",
+  "private": true,
+  "description": "AI Interview Copilot — Chrome extension + dashboard for interviewer performance scoring",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:server": "npm run dev -w @artemis/server",
+    "dev:dashboard": "npm run dev -w @artemis/dashboard",
+    "build:shared": "npm run build -w @artemis/shared",
+    "build:server": "npm run build -w @artemis/server",
+    "build:dashboard": "npm run build -w @artemis/dashboard",
+    "build:extension": "npm run build -w @artemis/extension",
+    "build": "npm run build:shared && npm run build:server && npm run build:dashboard && npm run build:extension",
+    "seed": "npm run seed -w @artemis/server",
+    "db:push": "npm run db:push -w @artemis/server",
+    "demo:fixture": "npm run demo:fixture -w @artemis/server",
+    "check-env": "npm run check-env -w @artemis/server",
+    "test": "npm run test -w @artemis/server",
+    "verify": "bash scripts/verify.sh"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "license": "MIT"
+}

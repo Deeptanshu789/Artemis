@@ -1,4 +1,4 @@
-import { NavLink, Outlet } from "react-router-dom";
+import { NavLink, Outlet, Link } from "react-router-dom";
 import { useAuth } from "../lib/auth";
 
 export function AppShell() {
@@ -20,6 +20,9 @@ export function AppShell() {
           <NavLink to="/trends" className={linkClass}>
             Trends
           </NavLink>
+          <NavLink to="/privacy" className={linkClass}>
+            Privacy
+          </NavLink>
         </nav>
         <div className="mt-auto space-y-3">
           <p className="text-xs text-muted">{user?.name}</p>
@@ -35,16 +38,16 @@ export function AppShell() {
       <div className="flex-1 flex flex-col min-w-0">
         <header className="border-b border-border px-8 py-3 flex justify-between items-center">
           <span className="text-xs text-muted">Scoped to your account · delete anytime</span>
-          <a href="#privacy" className="text-xs text-accent">
+          <Link to="/privacy" className="text-xs text-accent">
             Privacy
-          </a>
+          </Link>
         </header>
         <main className="flex-1 p-8">
           <Outlet />
         </main>
-        <footer id="privacy" className="px-8 py-4 border-t border-border text-xs text-muted">
+        <footer className="px-8 py-4 border-t border-border text-xs text-muted">
           Transcripts are scoped to you. Production deployments need explicit consent from all
-          participants per call-recording laws in your region.
+          participants per call-recording laws in your region. See Privacy for retention notes.
         </footer>
       </div>
     </div>

@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
 import type { Session } from "@artemis/shared";
-import { SUB_SCORE_LABELS } from "@artemis/shared";
 import { listSessions } from "../lib/api";
 import { useAuth } from "../lib/auth";
+import { SUB_SCORE_LABELS } from "@artemis/shared";
+import { Link } from "react-router-dom";
 import { ScoreBar } from "../components/ScoreBar";
 
 function scoreColor(n: number) {
@@ -35,17 +35,40 @@ export function SessionsPage() {
     };
   }, [user]);
 
-  if (loading) return <p className="text-muted">Loading sessions…</p>;
-  if (error) return <p className="text-danger">{error}</p>;
+  if (loading) {
+    return (
+      <div className="space-y-4 animate-pulse">
+        <div className="h-8 w-40 bg-surface-2 rounded-[4px]" />
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="h-40 border border-border bg-surface rounded-[4px]" />
+          ))}
+        </div>
+      </div>
+    );
+  }
+  if (error) {
+    return (
+      <div>
+        <p className="text-danger">{error}</p>
+        <p className="text-muted text-sm mt-2">
+          Is the API running? Try <code className="text-accent">DEMO_MODE=true npm run dev:server</code>
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div>
       <h1 className="font-display text-3xl mb-6">Sessions</h1>
       {sessions.length === 0 ? (
-        <p className="text-muted">
-          No sessions yet. Start from the Meet extension.{" "}
-          <span className="text-accent">Load unpacked build from apps/extension/dist</span>
-        </p>
+        <div className="border border-border bg-surface rounded-[4px] p-8">
+          <p className="text-text">No sessions yet.</p>
+          <p className="text-muted text-sm mt-2">
+            Open Google Meet → Artemis extension → <span className="text-accent">Start listening</span>.
+            Load unpacked build from <code className="text-accent">apps/extension/dist</code>.
+          </p>
+        </div>
       ) : (
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {sessions.map((s) => {
@@ -58,9 +81,7 @@ export function SessionsPage() {
               >
                 <div className="flex justify-between items-start gap-3">
                   <div>
-                    <p className="text-sm text-muted">
-                      {new Date(s.started_at).toLocaleString()}
-                    </p>
+                    <p className="text-sm text-muted">{new Date(s.started_at).toLocaleString()}</p>
                     <p className="mt-1">{s.candidate_label ?? "Candidate"}</p>
                     <p className="text-xs text-muted mt-1">
                       {s.interviewer_name ?? s.interviewer_id} · {s.status}
@@ -74,16 +95,14 @@ export function SessionsPage() {
                 </div>
                 {s.scoring && (
                   <div className="mt-4 space-y-1">
-                    {(Object.keys(SUB_SCORE_LABELS) as (keyof typeof SUB_SCORE_LABELS)[]).map(
-                      (k) => (
-                        <ScoreBar
-                          key={k}
-                          label={SUB_SCORE_LABELS[k]}
-                          value={s.scoring!.sub_scores[k]}
-                          compact
-                        />
-                      ),
-                    )}
+                    {(Object.keys(SUB_SCORE_LABELS) as (keyof typeof SUB_SCORE_LABELS)[]).map((k) => (
+                      <ScoreBar
+                        key={k}
+                        label={SUB_SCORE_LABELS[k]}
+                        value={s.scoring!.sub_scores[k]}
+                        compact
+                      />
+                    ))}
                   </div>
                 )}
               </Link>
