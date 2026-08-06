@@ -9,7 +9,8 @@
     "build:dev": "tsc && vite build"
   },
   "dependencies": {
-    "@artemis/shared": "*"
+    "@artemis/shared": "*",
+    "@supabase/supabase-js": "^2.49.1"
   },
   "devDependencies": {
     "@types/chrome": "^0.0.309",

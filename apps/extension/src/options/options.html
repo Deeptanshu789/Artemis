@@ -55,16 +55,32 @@
         font-size: 13px;
         color: var(--muted);
       }
+      .note {
+        margin-top: 20px;
+        font-size: 12px;
+        color: var(--muted);
+        line-height: 1.45;
+      }
+      code {
+        color: var(--accent);
+      }
     </style>
   </head>
   <body>
     <h1>Artemis</h1>
-    <p style="color: var(--muted)">API endpoints for this extension build.</p>
+    <p style="color: var(--muted)">API + Supabase for this extension build.</p>
     <label>API HTTP base <input id="apiHttp" /></label>
     <label>API WebSocket URL <input id="apiWs" /></label>
     <label>Dashboard URL <input id="dashboardUrl" /></label>
+    <label>Supabase URL <input id="supabaseUrl" /></label>
+    <label>Supabase anon key <input id="supabaseAnonKey" /></label>
     <button id="save" type="button">Save</button>
     <p id="status"></p>
+    <p class="note">
+      Google OAuth: add <code id="redirect"></code> under Supabase → Authentication → URL
+      configuration → Redirect URLs. Use the same Google account on dashboard + extension so
+      interviewee reports stay synced.
+    </p>
     <script type="module" src="options.js"></script>
   </body>
 </html>

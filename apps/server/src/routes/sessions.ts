@@ -39,11 +39,28 @@ sessionsRouter.get("/", async (req, res) => {
 
 sessionsRouter.post("/", async (req, res) => {
   try {
-    const interviewerId = (req.body?.interviewerId as string) || "guest";
-    const interviewerName = (req.body?.interviewerName as string) || "Guest Interviewer";
+    const interviewerId = (req.body?.interviewerId as string)?.trim();
+    const interviewerName = (req.body?.interviewerName as string)?.trim();
+    const candidateLabel =
+      (req.body?.candidateLabel as string)?.trim() || "Interviewee";
+
+    if (!interviewerId || interviewerId === "guest") {
+      res.status(401).json({
+        error: "Login required. Sign in on the extension with the same account as the dashboard.",
+      });
+      return;
+    }
+    if (!interviewerName) {
+      res.status(400).json({
+        error: "interviewerName required — enter your Google Meet display name.",
+      });
+      return;
+    }
+
     const id = randomUUID();
     const session = createRuntimeSession(id, interviewerId, interviewerName);
     session.status = "idle";
+    session.candidate_label = candidateLabel;
     setMemorySession(session);
     await persistSession(session).catch(() => undefined);
     res.status(201).json({ session });

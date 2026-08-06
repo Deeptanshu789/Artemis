@@ -34,7 +34,8 @@ export function SessionDetailPage() {
         <section>
           <h1 className="font-display text-3xl mb-2">Transcript</h1>
           <p className="text-xs text-muted mb-4">
-            <span className="text-accent">Interviewer</span> · Candidate
+            <span className="text-accent">Interviewer</span> (
+            {session.interviewer_name ?? "Meet name"}) · Interviewee
           </p>
           <div className="space-y-3 max-h-[70vh] overflow-y-auto pr-2">
             {session.transcript.length === 0 ? (

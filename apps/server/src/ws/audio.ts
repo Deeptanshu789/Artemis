@@ -25,7 +25,7 @@ function send(ws: WebSocket, msg: WsServerMessage): void {
   }
 }
 
-function createRuntimeSession(
+export function createRuntimeSession(
   sessionId: string,
   interviewerId: string,
   interviewerName?: string,
@@ -106,12 +106,20 @@ export function attachAudioWs(server: Server): WebSocketServer {
             session = createRuntimeSession(
               msg.sessionId,
               msg.interviewerId ?? "guest",
-              msg.interviewerName ?? "Guest Interviewer",
+              msg.interviewerName ?? "Interviewer",
             );
+            if (msg.interviewerName) {
+              session.interviewer_name = msg.interviewerName;
+            }
             setMemorySession(session);
             await persistSession(session).catch(() => undefined);
           } else {
-            patchSession(msg.sessionId, { status: "capturing", finalizeStarted: false });
+            patchSession(msg.sessionId, {
+              status: "capturing",
+              finalizeStarted: false,
+              ...(msg.interviewerName ? { interviewer_name: msg.interviewerName } : {}),
+              ...(msg.interviewerId ? { interviewer_id: msg.interviewerId } : {}),
+            });
           }
 
           const dg = new DeepgramSession(msg.sessionId, (segment) => {
@@ -185,4 +193,4 @@ export function attachAudioWs(server: Server): WebSocketServer {
   return wss;
 }
 
-export { createRuntimeSession, randomUUID };
+export { randomUUID };

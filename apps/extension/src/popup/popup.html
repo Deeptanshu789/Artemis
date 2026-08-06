@@ -8,25 +8,53 @@
   <body>
     <header>
       <h1>Artemis</h1>
-      <p class="tag">Interviewer quality, measured.</p>
+      <p class="tag">Interviewee quality, measured.</p>
     </header>
-    <div id="status-row">
-      <span id="dot" class="dot idle"></span>
-      <span id="status-text">Idle</span>
-    </div>
-    <p id="transcript" class="muted"></p>
-    <p id="nudge" class="nudge" hidden></p>
-    <div id="result" hidden>
-      <div id="score"></div>
-      <ul id="tips"></ul>
-      <a id="report" href="#" target="_blank" rel="noopener">Open full report</a>
-    </div>
-    <p id="error" class="error" hidden></p>
-    <div class="actions">
-      <button id="start" type="button">Start listening</button>
-      <button id="stop" type="button" class="secondary" disabled>Stop</button>
-    </div>
-    <p class="privacy">Visible banner shown in Meet. Participants should consent to analysis.</p>
+
+    <section id="auth-panel">
+      <p class="muted">Sign in with the same account as the dashboard.</p>
+      <label class="field">Email <input id="email" type="email" autocomplete="username" /></label>
+      <label class="field">Password <input id="password" type="password" autocomplete="current-password" /></label>
+      <div class="actions">
+        <button id="signin" type="button">Sign in</button>
+        <button id="signup" type="button" class="secondary">Sign up</button>
+      </div>
+      <button id="google" type="button" class="secondary full">Continue with Google</button>
+      <p id="auth-error" class="error" hidden></p>
+    </section>
+
+    <section id="app-panel" hidden>
+      <div id="user-row">
+        <span id="user-label" class="muted"></span>
+        <button id="signout" type="button" class="link">Sign out</button>
+      </div>
+
+      <label class="field">
+        Your Meet display name
+        <input id="meet-name" type="text" placeholder="Exactly as shown in Google Meet" />
+      </label>
+      <p class="hint">You are the interviewer. After Start, speak first so we tag your voice.</p>
+
+      <div id="status-row">
+        <span id="dot" class="dot idle"></span>
+        <span id="status-text">Idle</span>
+      </div>
+      <p id="transcript" class="muted"></p>
+      <p id="nudge" class="nudge" hidden></p>
+      <div id="result" hidden>
+        <p class="muted">Interviewee score</p>
+        <div id="score"></div>
+        <ul id="tips"></ul>
+        <a id="report" href="#" target="_blank" rel="noopener">Open full report</a>
+      </div>
+      <p id="error" class="error" hidden></p>
+      <div class="actions">
+        <button id="start" type="button">Start listening</button>
+        <button id="stop" type="button" class="secondary" disabled>Stop</button>
+      </div>
+      <p class="privacy">Visible banner shown in Meet. Participants should consent to analysis.</p>
+    </section>
+
     <script type="module" src="popup.js"></script>
   </body>
 </html>

@@ -4,7 +4,7 @@ Living context for any model/agent continuing this repo. **Append a Change Log e
 
 ## Product
 
-Chrome MV3 extension + Node/Express/`ws` backend + React dashboard. Captures Google Meet tab audio → Deepgram STT (diarization) → **Gemini** scoring → Drizzle/Postgres + Supabase → dashboard trends.
+Chrome MV3 extension + Node/Express/`ws` backend + React dashboard. Captures Google Meet tab audio → Deepgram STT (diarization) → **Gemini 2.5** scores the **interviewee** → Drizzle/Postgres + Supabase → dashboard trends (synced to signed-in interviewer).
 
 ## Repo map
 
@@ -19,7 +19,8 @@ Chrome MV3 extension + Node/Express/`ws` backend + React dashboard. Captures Goo
 
 ## Locked decisions
 
-- No Python. STT = Deepgram. LLM = **Google Gemini** (`GEMINI_API_KEY`, model `gemini-2.0-flash` default).
+- No Python. STT = Deepgram. LLM = **Google Gemini** (`GEMINI_API_KEY`, model `gemini-2.5-flash` default). Scores the **interviewee**, not the interviewer.
+- Extension user = interviewer; must sign in (same Supabase user as dashboard) and enter Meet display name. First speaker after Start = interviewer diarization tag.
 - DB = Supabase Postgres via **Drizzle** for schema push + seed (`DATABASE_URL`). Supabase JS for auth/REST fallback.
 - Meet-only MVP. `DEMO_MODE=true` skips live Deepgram/Gemini.
 - Design polish must follow `design/*.md` (interim stubs exist).
@@ -111,17 +112,26 @@ npm run verify            # health + fixture smoke
 
 ## Remaining for humans / next agent
 
-1. Add `DATABASE_URL` (Supabase → Settings → Database → URI) then `npm run db:push` + `npm run seed`.
-2. Add `GEMINI_API_KEY` for live scoring (`DEMO_MODE=false` falls back to demo scorer when missing).
-3. Meet E2E with extension + live Deepgram.
+1. Supabase Auth: enable Email + Google; add extension `chrome.identity.getRedirectURL()` to Redirect URLs.
+2. Meet E2E with signed-in extension + live Deepgram + Gemini 2.5 quota.
+3. Deploy API + dashboard; set extension Options URLs + `ADMIN_TOKEN` + `CORS_ORIGIN`.
 4. Replace interim `design/*.md` if final UI exists; re-skin.
-5. Commit/push remaining untracked monorepo files.
-6. Deploy + set extension Options URLs.
+5. Commit/push remaining monorepo files (never commit `.env`).
 
-### 2026-08-07 — db:push + seed + run
+### 2026-08-07 — Interviewee scoring + extension auth sync
 
-- `drizzle-kit push` created `public.sessions`.
-- Drizzle seed: 5 Jordan Lee rows confirmed in Supabase REST.
-- API `:3001` + dashboard `:5173` running; health all green.
-- Gemini key present but API returns **429 RATE_LIMIT** (`quota_limit_value: 0` for asia-southeast1). Scoring falls back to demo rubric on 429 so sessions still reach `ready`.
-- Fix Gemini: use an AI Studio key with quota, or request quota increase / try another region/project.
+- Rubric flipped: scores **interviewee** (`problem_solving`, `communication`, `structure`, `depth`, `collaboration`, `professionalism`).
+- Default model `gemini-2.5-flash`.
+- Extension requires Supabase login (email/password or Google via `chrome.identity`); sessions use `interviewer_id = user.id` so dashboard lists match.
+- Popup asks for Meet display name (interviewer); first speaker after Start tagged interviewer, other = interviewee.
+- POST `/sessions` rejects guest / missing Meet name. Dashboard copy + Trends scoped to signed-in user.
+- Manifest `0.3.0`; rebuild `apps/extension/dist`.
+
+### 2026-08-07 — Prod harden + extension build + DB reset
+
+- Server: security headers, multi-origin CORS (+ `chrome-extension://`), `ADMIN_TOKEN` gate on `/admin/*`, graceful SIGINT/SIGTERM, hide stack in prod, block `DEMO_MODE` when `NODE_ENV=production`.
+- Removed production auto-seed; demo seed only when `DEMO_MODE` and not prod.
+- Added `npm run db:reset` (+ `POST /admin/reset-db`) to wipe `sessions`.
+- Extension: manifest `0.2.0`, production minify build, `docs/EXTENSION.md` load-unpacked guide.
+- Ran DB reset (cleared seeded Jordan Lee rows) and `build:extension` → `apps/extension/dist`.
+

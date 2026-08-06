@@ -30,7 +30,7 @@ export function Scorecard({
   return (
     <div>
       <div className="font-display text-6xl">{Math.round(overall)}</div>
-      <p className="text-muted text-sm mt-1">Overall interviewer score</p>
+      <p className="text-muted text-sm mt-1">Overall interviewee score</p>
       <div className="mt-6 space-y-2">
         {(Object.keys(SUB_SCORE_LABELS) as (keyof SubScores)[]).map((k) => (
           <ScoreBar key={k} label={SUB_SCORE_LABELS[k]} value={sub[k]} />

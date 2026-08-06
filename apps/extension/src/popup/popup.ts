@@ -1,5 +1,15 @@
 import { DASHBOARD_URL } from "../config";
 import type { ScoringResult } from "@artemis/shared";
+import {
+  clearAuth,
+  getMeetDisplayName,
+  getStoredAuth,
+  setMeetDisplayName,
+  signInWithGoogle,
+  signInWithPassword,
+  signUpWithPassword,
+  type AuthUser,
+} from "../auth";
 
 type State = {
   status: string;
@@ -10,6 +20,14 @@ type State = {
   nudge?: string;
   dashboardUrl?: string;
 };
+
+const authPanel = document.getElementById("auth-panel")!;
+const appPanel = document.getElementById("app-panel")!;
+const emailEl = document.getElementById("email") as HTMLInputElement;
+const passwordEl = document.getElementById("password") as HTMLInputElement;
+const authError = document.getElementById("auth-error")!;
+const userLabel = document.getElementById("user-label")!;
+const meetNameEl = document.getElementById("meet-name") as HTMLInputElement;
 
 const statusText = document.getElementById("status-text")!;
 const dot = document.getElementById("dot")!;
@@ -22,6 +40,33 @@ const report = document.getElementById("report") as HTMLAnchorElement;
 const errorEl = document.getElementById("error")!;
 const startBtn = document.getElementById("start") as HTMLButtonElement;
 const stopBtn = document.getElementById("stop") as HTMLButtonElement;
+
+let authUser: AuthUser | null = null;
+
+function showAuthError(msg: string) {
+  authError.hidden = false;
+  authError.textContent = msg;
+}
+
+function clearAuthError() {
+  authError.hidden = true;
+  authError.textContent = "";
+}
+
+async function showLoggedIn(user: AuthUser) {
+  authUser = user;
+  authPanel.hidden = true;
+  appPanel.hidden = false;
+  userLabel.textContent = user.email || user.name;
+  meetNameEl.value = (await getMeetDisplayName()) || "";
+  refresh();
+}
+
+function showLoggedOut() {
+  authUser = null;
+  authPanel.hidden = false;
+  appPanel.hidden = true;
+}
 
 function render(state: State) {
   statusText.textContent = state.status;
@@ -66,10 +111,74 @@ function refresh() {
   });
 }
 
+document.getElementById("signin")!.addEventListener("click", () => {
+  void (async () => {
+    clearAuthError();
+    try {
+      const user = await signInWithPassword(emailEl.value.trim(), passwordEl.value);
+      await showLoggedIn(user);
+    } catch (e) {
+      showAuthError(e instanceof Error ? e.message : String(e));
+    }
+  })();
+});
+
+document.getElementById("signup")!.addEventListener("click", () => {
+  void (async () => {
+    clearAuthError();
+    try {
+      const user = await signUpWithPassword(emailEl.value.trim(), passwordEl.value);
+      await showLoggedIn(user);
+    } catch (e) {
+      showAuthError(e instanceof Error ? e.message : String(e));
+    }
+  })();
+});
+
+document.getElementById("google")!.addEventListener("click", () => {
+  void (async () => {
+    clearAuthError();
+    try {
+      const user = await signInWithGoogle();
+      await showLoggedIn(user);
+    } catch (e) {
+      showAuthError(e instanceof Error ? e.message : String(e));
+    }
+  })();
+});
+
+document.getElementById("signout")!.addEventListener("click", () => {
+  void (async () => {
+    await clearAuth();
+    showLoggedOut();
+  })();
+});
+
+meetNameEl.addEventListener("change", () => {
+  void setMeetDisplayName(meetNameEl.value);
+});
+
 startBtn.addEventListener("click", () => {
-  chrome.runtime.sendMessage({ type: "start" }, (res) => {
-    if (res?.state) render(res.state);
-  });
+  void (async () => {
+    const meetName = meetNameEl.value.trim();
+    if (!meetName) {
+      errorEl.hidden = false;
+      errorEl.textContent = "Enter your Google Meet display name first.";
+      return;
+    }
+    if (!authUser) {
+      showLoggedOut();
+      return;
+    }
+    await setMeetDisplayName(meetName);
+    await chrome.storage.local.set({
+      interviewerId: authUser.id,
+      interviewerName: meetName,
+    });
+    chrome.runtime.sendMessage({ type: "start", meetDisplayName: meetName }, (res) => {
+      if (res?.state) render(res.state);
+    });
+  })();
 });
 
 stopBtn.addEventListener("click", () => {
@@ -82,5 +191,12 @@ chrome.runtime.onMessage.addListener((msg) => {
   if (msg?.type === "state" && msg.state) render(msg.state);
 });
 
-refresh();
-setInterval(refresh, 1500);
+void (async () => {
+  const user = await getStoredAuth();
+  if (user) await showLoggedIn(user);
+  else showLoggedOut();
+})();
+
+setInterval(() => {
+  if (authUser) refresh();
+}, 1500);

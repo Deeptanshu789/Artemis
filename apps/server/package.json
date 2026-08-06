@@ -11,6 +11,7 @@
     "db:studio": "bash -c 'set -a && . ../../.env && set +a && drizzle-kit studio'",
     "db:reset": "tsx src/scripts/reset-db.ts",
     "seed": "tsx src/scripts/seed.ts",
+    "demo:fixture": "tsx src/scripts/demo-fixture.ts",
     "check-env": "tsx src/scripts/check-env.ts",
     "test": "tsx --test src/scripts/test-unit.ts"
   },

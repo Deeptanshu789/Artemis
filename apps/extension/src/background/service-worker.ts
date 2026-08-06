@@ -1,4 +1,5 @@
 import { loadEndpoints, DASHBOARD_URL } from "../config";
+import { getMeetDisplayName, getStoredAuth } from "../auth";
 import type { ScoringResult, SessionStatus, WsServerMessage } from "@artemis/shared";
 
 type CaptureState = {
@@ -56,16 +57,24 @@ async function ensureOffscreen(): Promise<void> {
   });
 }
 
-async function createSession(apiHttp: string): Promise<{ id: string }> {
-  const stored = await chrome.storage.local.get(["interviewerId", "interviewerName"]);
-  const interviewerId = stored.interviewerId ?? "guest";
-  const interviewerName = stored.interviewerName ?? "Guest Interviewer";
+async function createSession(
+  apiHttp: string,
+  interviewerId: string,
+  interviewerName: string,
+): Promise<{ id: string }> {
   const res = await fetch(`${apiHttp}/sessions`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ interviewerId, interviewerName }),
+    body: JSON.stringify({
+      interviewerId,
+      interviewerName,
+      candidateLabel: "Interviewee",
+    }),
   });
-  if (!res.ok) throw new Error(`Create session failed: ${res.status}`);
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error((body as { error?: string }).error ?? `Create session failed: ${res.status}`);
+  }
   const data = await res.json();
   return { id: data.session.id as string };
 }
@@ -124,19 +133,31 @@ function connectWs(
   });
 }
 
-async function startCapture(tabId: number): Promise<void> {
+async function startCapture(tabId: number, meetDisplayName?: string): Promise<void> {
   try {
     const endpoints = await loadEndpoints();
     state.dashboardUrl = endpoints.dashboardUrl;
-    const stored = await chrome.storage.local.get(["interviewerId", "interviewerName"]);
-    const interviewerId = (stored.interviewerId as string) ?? "guest";
-    const interviewerName = (stored.interviewerName as string) ?? "Guest Interviewer";
 
-    const { id } = await createSession(endpoints.apiHttp);
+    const auth = await getStoredAuth();
+    if (!auth) {
+      throw new Error("Sign in required — use the same account as the dashboard.");
+    }
+    const interviewerName =
+      (meetDisplayName?.trim() || (await getMeetDisplayName()) || "").trim();
+    if (!interviewerName) {
+      throw new Error("Enter your Google Meet display name before starting.");
+    }
+
+    await chrome.storage.local.set({
+      interviewerId: auth.id,
+      interviewerName,
+    });
+
+    const { id } = await createSession(endpoints.apiHttp, auth.id, interviewerName);
     state.sessionId = id;
     state.nudge = undefined;
     sequence = 0;
-    ws = await connectWs(endpoints.apiWs, id, interviewerId, interviewerName);
+    ws = await connectWs(endpoints.apiWs, id, auth.id, interviewerName);
 
     const streamId = await new Promise<string>((resolve, reject) => {
       chrome.tabCapture.getMediaStreamId({ targetTabId: tabId }, (sid) => {
@@ -225,7 +246,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
         sendResponse({ state });
         return;
       }
-      await startCapture(tab.id);
+      await startCapture(tab.id, message.meetDisplayName as string | undefined);
       sendResponse({ state });
       return;
     }

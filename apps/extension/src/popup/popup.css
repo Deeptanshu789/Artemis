@@ -140,3 +140,51 @@ button:disabled {
   font-size: 11px;
   color: var(--muted);
 }
+
+.field {
+  display: block;
+  margin: 10px 0;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.field input {
+  display: block;
+  width: 100%;
+  margin-top: 4px;
+  padding: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  border-radius: 4px;
+  box-sizing: border-box;
+}
+
+.hint {
+  font-size: 11px;
+  color: var(--muted);
+  margin: 0 0 12px;
+}
+
+#user-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  gap: 8px;
+}
+
+button.full {
+  width: 100%;
+  margin-top: 8px;
+}
+
+button.link {
+  flex: 0;
+  background: transparent;
+  border: none;
+  color: var(--accent);
+  padding: 0;
+  font-weight: 500;
+  font-size: 12px;
+}

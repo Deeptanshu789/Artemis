@@ -22,7 +22,7 @@ export function SessionsPage() {
     let cancelled = false;
     (async () => {
       try {
-        const rows = await listSessions(user?.isGuest ? undefined : user?.id);
+        const rows = await listSessions(user?.id);
         if (!cancelled) setSessions(rows);
       } catch (e) {
         if (!cancelled) setError(e instanceof Error ? e.message : String(e));
@@ -65,8 +65,8 @@ export function SessionsPage() {
         <div className="border border-border bg-surface rounded-[4px] p-8">
           <p className="text-text">No sessions yet.</p>
           <p className="text-muted text-sm mt-2">
-            Open Google Meet → Artemis extension → <span className="text-accent">Start listening</span>.
-            Load unpacked build from <code className="text-accent">apps/extension/dist</code>.
+            Open Google Meet → Artemis extension (signed in) → enter Meet display name →{" "}
+            <span className="text-accent">Start listening</span>. Reports sync to this account.
           </p>
         </div>
       ) : (
@@ -82,9 +82,9 @@ export function SessionsPage() {
                 <div className="flex justify-between items-start gap-3">
                   <div>
                     <p className="text-sm text-muted">{new Date(s.started_at).toLocaleString()}</p>
-                    <p className="mt-1">{s.candidate_label ?? "Candidate"}</p>
+                    <p className="mt-1">{s.candidate_label ?? "Interviewee"}</p>
                     <p className="text-xs text-muted mt-1">
-                      {s.interviewer_name ?? s.interviewer_id} · {s.status}
+                      Interviewer: {s.interviewer_name ?? s.interviewer_id} · {s.status}
                     </p>
                   </div>
                   {overall != null && (

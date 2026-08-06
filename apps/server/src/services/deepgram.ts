@@ -67,6 +67,8 @@ export class DeepgramSession {
         if (!runtime) return;
 
         if (runtime.firstSpeakerIndex === undefined) {
+          // Extension user (interviewer) should speak first after Start so their
+          // diarization index maps to "interviewer"; all others = interviewee.
           runtime.firstSpeakerIndex = speakerIndex;
           runtime.speakerMap.set(speakerIndex, "interviewer");
         }

@@ -1,6 +1,6 @@
 # Artemis — AI Interview Copilot
 
-Chrome extension + Node backend + React dashboard. Captures Google Meet tab audio, transcribes with Deepgram (diarization), scores the **interviewer** via Google Gemini, stores sessions (Drizzle + Postgres/Supabase), and shows trends in the dashboard.
+Chrome extension + Node backend + React dashboard. Captures Google Meet tab audio, transcribes with Deepgram (diarization), scores the **interviewee** via Google Gemini 2.5, stores sessions (Drizzle + Postgres/Supabase) under the signed-in interviewer account, and shows trends in the dashboard.
 
 ## Monorepo
 
@@ -21,13 +21,27 @@ cp .env.example .env
 
 npm install
 npm run build:shared
-npm run db:push -w @artemis/server   # needs DATABASE_URL
-npm run seed -w @artemis/server
-DEMO_MODE=true npm run dev:server   # terminal 1
+npm run db:push                     # needs DATABASE_URL
+npm run build                       # server + dashboard + extension
+DEMO_MODE=true npm run dev:server   # terminal 1 (local)
 npm run dev:dashboard               # terminal 2
-npm run build:extension             # load apps/extension/dist in chrome://extensions
+npm run build:extension             # load apps/extension/dist — see docs/EXTENSION.md
 npm run demo:fixture                # offline scoring smoke test
+npm run db:reset                    # wipe sessions (destructive)
 ```
+
+### Production-ish local
+
+```bash
+# .env: DEMO_MODE=false, ADMIN_TOKEN=..., CORS_ORIGIN=https://your-dashboard
+npm run build
+NODE_ENV=production npm run start:server
+npm run -w @artemis/dashboard preview -- --host 127.0.0.1 --port 5173
+```
+
+## Extension testing
+
+See [`docs/EXTENSION.md`](docs/EXTENSION.md). Sign in on the extension with the **same** Supabase user as the dashboard. Enter your Meet display name before Start (you = interviewer; other speaker = interviewee).
 
 ## Design MD gate
 
@@ -45,6 +59,7 @@ Required: `dashboard-overview.md`, `session-detail.md`, `auth-shell.md`, optiona
 
 - [`docs/ENV.md`](docs/ENV.md)
 - [`docs/DEMO.md`](docs/DEMO.md)
+- [`docs/EXTENSION.md`](docs/EXTENSION.md) — load unpacked + Meet test
 - [`docs/JUDGES.md`](docs/JUDGES.md)
 - [`docs/supabase-schema.sql`](docs/supabase-schema.sql)
 - [`AGENTS.md`](AGENTS.md) — cross-model agent memory / change log
