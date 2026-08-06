@@ -11,7 +11,7 @@ export function AppShell() {
       <aside className="w-[220px] shrink-0 border-r border-border bg-bg p-6 flex flex-col gap-6">
         <div>
           <div className="font-display text-3xl text-text">Artemis</div>
-          <p className="text-xs text-muted mt-1">Interviewer quality</p>
+          <p className="text-xs text-muted mt-1">Interviewee quality</p>
         </div>
         <nav className="flex flex-col gap-1">
           <NavLink to="/" end className={linkClass}>

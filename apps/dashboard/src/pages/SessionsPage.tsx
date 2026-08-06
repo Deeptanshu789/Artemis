@@ -82,9 +82,10 @@ export function SessionsPage() {
                 <div className="flex justify-between items-start gap-3">
                   <div>
                     <p className="text-sm text-muted">{new Date(s.started_at).toLocaleString()}</p>
-                    <p className="mt-1">{s.candidate_label ?? "Interviewee"}</p>
+                    <p className="mt-1 font-medium">{s.candidate_label ?? "Interviewee"}</p>
                     <p className="text-xs text-muted mt-1">
-                      Interviewer: {s.interviewer_name ?? s.interviewer_id} · {s.status}
+                      Session · {s.status}
+                      {s.interviewer_name ? ` · by ${s.interviewer_name}` : ""}
                     </p>
                   </div>
                   {overall != null && (

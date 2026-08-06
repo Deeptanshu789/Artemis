@@ -9,7 +9,7 @@ export function LoginPage() {
     <div className="min-h-full flex items-center justify-center px-4 bg-bg">
       <div className="w-full max-w-[400px]">
         <h1 className="font-display text-5xl text-text">Artemis</h1>
-        <p className="mt-3 text-muted">Score how well interviewees interview.</p>
+        <p className="mt-3 text-muted">Score interviewee performance from Meet interviews.</p>
         <div className="mt-10 space-y-3">
           <button
             type="button"

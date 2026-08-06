@@ -1,9 +1,15 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import type { Session } from "@artemis/shared";
+import type { Session, SpeakerRole } from "@artemis/shared";
 import { deleteSession, getSession } from "../lib/api";
 import { useAuth } from "../lib/auth";
 import { Scorecard } from "../components/ScoreBar";
+
+function speakerLabel(role: SpeakerRole): string {
+  if (role === "candidate") return "Interviewee";
+  if (role === "interviewer") return "Interviewer";
+  return "Unknown";
+}
 
 export function SessionDetailPage() {
   const { id } = useParams();
@@ -34,8 +40,9 @@ export function SessionDetailPage() {
         <section>
           <h1 className="font-display text-3xl mb-2">Transcript</h1>
           <p className="text-xs text-muted mb-4">
-            <span className="text-accent">Interviewer</span> (
-            {session.interviewer_name ?? "Meet name"}) · Interviewee
+            <span className="text-accent">Interviewee</span>
+            {" · "}
+            Interviewer ({session.interviewer_name ?? "Meet name"})
           </p>
           <div className="space-y-3 max-h-[70vh] overflow-y-auto pr-2">
             {session.transcript.length === 0 ? (
@@ -45,11 +52,11 @@ export function SessionDetailPage() {
                 <div
                   key={seg.id}
                   className={`border-l-2 pl-3 ${
-                    seg.speaker === "interviewer" ? "border-accent" : "border-border"
+                    seg.speaker === "candidate" ? "border-accent" : "border-border"
                   }`}
                 >
                   <p className="text-xs text-muted uppercase tracking-wide">
-                    {seg.speaker}
+                    {speakerLabel(seg.speaker)}
                     {seg.startMs != null ? ` · ${Math.round(seg.startMs / 1000)}s` : ""}
                   </p>
                   <p className="mt-1 text-sm">{seg.text}</p>
