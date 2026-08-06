@@ -22,6 +22,8 @@ export default defineConfig(({ mode }) => {
     build: {
       outDir: "dist",
       emptyOutDir: true,
+      // Prevent Vite from injecting document/window modulepreload helpers into the SW
+      modulePreload: false,
       rollupOptions: {
         input: {
           background: resolve(__dirname, "src/background/service-worker.ts"),
@@ -34,6 +36,12 @@ export default defineConfig(({ mode }) => {
           entryFileNames: "[name].js",
           chunkFileNames: "chunks/[name].js",
           assetFileNames: "assets/[name][extname]",
+          manualChunks(id) {
+            if (id.includes("node_modules/@supabase")) {
+              return "supabase";
+            }
+            return undefined;
+          },
         },
       },
       target: "chrome120",

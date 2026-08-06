@@ -1,5 +1,6 @@
 import { loadEndpoints, DASHBOARD_URL } from "../config";
-import { getMeetDisplayName, getStoredAuth } from "../auth";
+import { getMeetDisplayName, getStoredAuth } from "../session";
+import { signInWithGoogle } from "../googleAuth";
 import type { ScoringResult, SessionStatus, WsServerMessage } from "@artemis/shared";
 
 type CaptureState = {
@@ -241,7 +242,6 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     }
     if (message?.type === "signInGoogle") {
       try {
-        const { signInWithGoogle } = await import("../auth");
         const user = await signInWithGoogle();
         sendResponse({ ok: true, user });
       } catch (err) {
