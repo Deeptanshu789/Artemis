@@ -11,7 +11,8 @@ import { finalizeSession, registerDeepgram } from "../services/finalize.js";
 async function main() {
   process.env.DEMO_MODE = "true";
   const id = randomUUID();
-  const session = createRuntimeSession(id, "guest", "Demo Guest");
+  const session = createRuntimeSession(id, "demo-fixture", "Demo Interviewer");
+  session.candidate_label = "Demo Interviewee";
   setMemorySession(session);
 
   const dg = new DeepgramSession(id, () => undefined);

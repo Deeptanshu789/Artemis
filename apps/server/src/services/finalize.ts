@@ -40,7 +40,7 @@ export async function finalizeSession(sessionId: string, send?: SendFn): Promise
     status: "scoring",
     ended_at: session.ended_at ?? new Date().toISOString(),
   });
-  send?.({ type: "status", sessionId, status: "scoring", message: "Generating HR score…" });
+  send?.({ type: "status", sessionId, status: "scoring", message: "Scoring interviewee…" });
 
   const dg = getDeepgram(sessionId);
   if (dg) {
@@ -50,7 +50,10 @@ export async function finalizeSession(sessionId: string, send?: SendFn): Promise
 
   try {
     const fresh = getMemorySession(sessionId)!;
-    const scoring = await scoreTranscript(sessionId, fresh.transcript);
+    const scoring = await scoreTranscript(sessionId, fresh.transcript, {
+      interviewerName: fresh.interviewer_name,
+      candidateLabel: fresh.candidate_label,
+    });
     const updated = patchSession(sessionId, {
       status: "ready",
       scoring,

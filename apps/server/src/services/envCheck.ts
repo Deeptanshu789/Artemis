@@ -43,6 +43,12 @@ export function validateEnv(): EnvReport {
   }
 
   if (!env.corsOrigin) warnings.push("CORS_ORIGIN empty");
+  if (env.isProd && !env.adminToken) {
+    warnings.push("ADMIN_TOKEN unset — /admin/* routes refuse all requests in production.");
+  }
+  if (env.isProd && env.corsOrigins === true) {
+    warnings.push("CORS_ORIGIN=* in production — prefer explicit dashboard origin(s).");
+  }
 
   return {
     ok: env.demoMode || (deepgram && gemini),

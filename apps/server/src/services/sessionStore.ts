@@ -26,6 +26,12 @@ export function deleteMemorySession(id: string): void {
   memory.delete(id);
 }
 
+export function clearAllMemorySessions(): number {
+  const n = memory.size;
+  memory.clear();
+  return n;
+}
+
 export function listMemorySessions(interviewerId?: string): RuntimeSession[] {
   const all = [...memory.values()];
   if (!interviewerId) return all;

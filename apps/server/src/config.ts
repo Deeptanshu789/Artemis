@@ -3,8 +3,8 @@ import { fileURLToPath } from "node:url";
 import dotenv from "dotenv";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-dotenv.config({ path: path.resolve(__dirname, "../../../.env") });
-dotenv.config({ path: path.resolve(__dirname, "../.env") });
+dotenv.config({ path: path.resolve(__dirname, "../../../.env"), override: true });
+dotenv.config({ path: path.resolve(__dirname, "../.env"), override: true });
 
 function required(name: string, fallback?: string): string {
   const v = process.env[name] ?? fallback;
@@ -29,18 +29,41 @@ function resolveDatabaseUrl(): string {
   return "";
 }
 
+function parseCorsOrigins(): string[] | true {
+  const raw = (process.env.CORS_ORIGIN ?? "http://localhost:5173").trim();
+  if (raw === "*") return true;
+  return raw
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
+
+const nodeEnv = process.env.NODE_ENV ?? "development";
+const isProd = nodeEnv === "production";
+const demoMode = process.env.DEMO_MODE === "true";
+
+if (isProd && demoMode && process.env.ALLOW_DEMO_IN_PROD !== "true") {
+  throw new Error(
+    "DEMO_MODE=true blocked in production. Set ALLOW_DEMO_IN_PROD=true to override, or DEMO_MODE=false.",
+  );
+}
+
 export const env = {
   port: Number(process.env.PORT ?? 3001),
   corsOrigin: process.env.CORS_ORIGIN ?? "http://localhost:5173",
+  corsOrigins: parseCorsOrigins(),
   dashboardUrl: process.env.DASHBOARD_URL ?? "http://localhost:5173",
   deepgramApiKey: required("DEEPGRAM_API_KEY"),
   geminiApiKey: required("GEMINI_API_KEY"),
-  geminiModel: process.env.GEMINI_MODEL ?? "gemini-2.0-flash",
+  geminiModel: process.env.GEMINI_MODEL ?? "gemini-2.5-flash",
   supabaseUrl: required("SUPABASE_URL"),
   supabaseAnonKey: required("SUPABASE_ANON_KEY"),
   supabaseServiceRoleKey: required("SUPABASE_SERVICE_ROLE_KEY"),
   databaseUrl: resolveDatabaseUrl(),
-  demoMode: process.env.DEMO_MODE === "true",
-  nodeEnv: process.env.NODE_ENV ?? "development",
+  demoMode,
+  nodeEnv,
+  isProd,
+  adminToken: process.env.ADMIN_TOKEN ?? "",
   maxSessionMs: Number(process.env.MAX_SESSION_MS ?? 90 * 60 * 1000),
+  jsonBodyLimit: process.env.JSON_BODY_LIMIT ?? "2mb",
 };

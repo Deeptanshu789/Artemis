@@ -2,6 +2,8 @@ import { defineConfig } from "vite";
 import { resolve } from "node:path";
 import { viteStaticCopy } from "vite-plugin-static-copy";
 
+const isProd = process.env.NODE_ENV === "production";
+
 export default defineConfig({
   build: {
     outDir: "dist",
@@ -21,7 +23,8 @@ export default defineConfig({
       },
     },
     target: "chrome120",
-    minify: false,
+    minify: isProd,
+    sourcemap: !isProd,
   },
   plugins: [
     viteStaticCopy({

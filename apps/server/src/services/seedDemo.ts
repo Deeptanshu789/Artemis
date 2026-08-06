@@ -1,33 +1,43 @@
 import { randomUUID } from "node:crypto";
 import type { ScoringResult, TranscriptSegment } from "@artemis/shared";
+import { RUBRIC_WEIGHTS } from "@artemis/shared";
 import { getDb, databaseUrlConfigured, closeDb } from "../db/client.js";
 import { sessions } from "../db/schema.js";
 import { setMemorySession, type RuntimeSession, log } from "./sessionStore.js";
 
 function score(overall: number): ScoringResult {
   const base = Math.max(40, overall - 5);
+  const sub = {
+    problem_solving: Math.min(100, base + 4),
+    communication: Math.max(0, base - 2),
+    structure: Math.min(100, base + 1),
+    depth: Math.max(0, base - 4),
+    collaboration: Math.min(95, base + 3),
+    professionalism: Math.min(100, base + 6),
+  };
+  const weighted = Math.round(
+    sub.problem_solving * RUBRIC_WEIGHTS.problem_solving +
+      sub.communication * RUBRIC_WEIGHTS.communication +
+      sub.structure * RUBRIC_WEIGHTS.structure +
+      sub.depth * RUBRIC_WEIGHTS.depth +
+      sub.collaboration * RUBRIC_WEIGHTS.collaboration +
+      sub.professionalism * RUBRIC_WEIGHTS.professionalism,
+  );
   return {
-    overall_score: overall,
-    sub_scores: {
-      structure: Math.min(100, base + 2),
-      active_listening: Math.max(0, base - 3),
-      clarity: Math.min(100, base + 5),
-      time_management: Math.max(0, base - 8),
-      fairness: Math.min(95, base + 10),
-      candidate_experience: base,
-    },
+    overall_score: overall || weighted,
+    sub_scores: sub,
     summary: [
-      "Covered role competencies.",
-      "Some follow-ups present.",
-      "Closing was professional.",
-      "Talk ratio slightly interviewer-heavy.",
-      "No major fairness issues detected.",
+      "Covered role competencies with concrete examples.",
+      "Communication was mostly clear.",
+      "Some answers stayed high-level.",
+      "Collaborative tone throughout.",
+      "Professional close.",
     ],
-    strengths: ["Clear agenda", "Professional tone"],
+    strengths: ["Clear verbal delivery", "Ownership language"],
     improvement_tips: [
-      "Ask deeper follow-ups",
-      "Reduce leading phrasing",
-      "Invite candidate questions earlier",
+      "Quantify impact in stories",
+      "Explain tradeoffs before the solution",
+      "Ask clarifying questions when prompts are vague",
     ],
   };
 }
@@ -47,7 +57,7 @@ function buildRows(): RuntimeSession[] {
       id,
       interviewer_id: interviewerB,
       interviewer_name: "Jordan Lee",
-      candidate_label: `Candidate ${i + 1}`,
+      candidate_label: `Interviewee ${i + 1}`,
       status: "ready" as const,
       platform: "google_meet" as const,
       transcript,

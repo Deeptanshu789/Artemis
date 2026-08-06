@@ -17,14 +17,17 @@ function formatTranscript(segments: TranscriptSegment[]): string {
         s.speaker === "interviewer"
           ? "Interviewer"
           : s.speaker === "candidate"
-            ? "Candidate"
+            ? "Interviewee"
             : "Unknown";
       return `${who}: ${s.text}`;
     })
     .join("\n");
 }
 
-export function buildScoringPrompt(segments: TranscriptSegment[]): string {
+export function buildScoringPrompt(
+  segments: TranscriptSegment[],
+  meta?: { interviewerName?: string; candidateLabel?: string },
+): string {
   const weights = Object.entries(RUBRIC_WEIGHTS)
     .map(
       ([k, w]) =>
@@ -32,33 +35,40 @@ export function buildScoringPrompt(segments: TranscriptSegment[]): string {
     )
     .join("\n");
 
-  return `You are an HR interview-quality auditor. Score the INTERVIEWER only (not the candidate).
+  const interviewerLabel = meta?.interviewerName?.trim() || "Interviewer";
+  const candidateLabel = meta?.candidateLabel?.trim() || "Interviewee";
+
+  return `You are an HR hiring assessor. Score the INTERVIEWEE (candidate) only — not the interviewer.
+
+Speaker labels in the transcript:
+- "Interviewer" = the person running the interview (Meet display name: ${interviewerLabel}). They started Artemis capture.
+- "Interviewee" = the other speaker (${candidateLabel}). Grade this person.
 
 Rubric weights:
 ${weights}
 
-Dimensions:
-- structure: clear structure, covered role-relevant topics
-- active_listening: follow-ups, no interrupting, responded to what candidate said
-- clarity: clear questions, no rambling
-- time_management: balanced talk-time, pacing
-- fairness: no leading/inappropriate questions
-- candidate_experience: rapport, space for candidate questions, professional close
+Dimensions (about the interviewee):
+- problem_solving: reasoned through problems, tradeoffs, debugging / decision quality
+- communication: clear, concise, structured explanations; answered the question asked
+- structure: STAR-like or logical answer structure; stayed on topic
+- depth: technical or role-relevant depth vs surface-level answers
+- collaboration: listening, clarifying questions, teamwork / ownership signals
+- professionalism: tone, honesty about gaps, respect, composure
 
 Return STRICT JSON only (no markdown fences, no prose). Schema:
 {
   "overall_score": 0-100,
   "sub_scores": {
+    "problem_solving": 0-100,
+    "communication": 0-100,
     "structure": 0-100,
-    "active_listening": 0-100,
-    "clarity": 0-100,
-    "time_management": 0-100,
-    "fairness": 0-100,
-    "candidate_experience": 0-100
+    "depth": 0-100,
+    "collaboration": 0-100,
+    "professionalism": 0-100
   },
-  "summary": ["5-6 short bullets about the interview"],
-  "strengths": ["1-3 interviewer strengths"],
-  "improvement_tips": ["2-4 actionable tips for the interviewer"]
+  "summary": ["5-6 short bullets about the interviewee"],
+  "strengths": ["1-3 interviewee strengths"],
+  "improvement_tips": ["2-4 actionable tips for the interviewee"]
 }
 
 overall_score should approximate the weighted sum of sub_scores.
@@ -80,23 +90,23 @@ function extractJson(text: string): unknown {
 export function demoScoring(segments: TranscriptSegment[]): ScoringResult {
   const talkI = segments.filter((s) => s.speaker === "interviewer").length;
   const talkC = segments.filter((s) => s.speaker === "candidate").length;
-  const ratio = talkI + talkC === 0 ? 0.5 : talkI / (talkI + talkC);
-  const timeMgmt = Math.round(100 - Math.abs(ratio - 0.45) * 120);
+  const ratio = talkI + talkC === 0 ? 0.5 : talkC / (talkI + talkC);
+  const communication = Math.round(55 + ratio * 40);
   const base = {
-    structure: 78,
-    active_listening: 72,
-    clarity: 80,
-    time_management: Math.max(40, Math.min(95, timeMgmt)),
-    fairness: 88,
-    candidate_experience: 75,
+    problem_solving: 76,
+    communication: Math.max(45, Math.min(95, communication)),
+    structure: 72,
+    depth: 70,
+    collaboration: 74,
+    professionalism: 82,
   };
   const overall = Math.round(
-    base.structure * 0.2 +
-      base.active_listening * 0.2 +
-      base.clarity * 0.15 +
-      base.time_management * 0.15 +
-      base.fairness * 0.15 +
-      base.candidate_experience * 0.15,
+    base.problem_solving * RUBRIC_WEIGHTS.problem_solving +
+      base.communication * RUBRIC_WEIGHTS.communication +
+      base.structure * RUBRIC_WEIGHTS.structure +
+      base.depth * RUBRIC_WEIGHTS.depth +
+      base.collaboration * RUBRIC_WEIGHTS.collaboration +
+      base.professionalism * RUBRIC_WEIGHTS.professionalism,
   );
   return ScoringResultSchema.parse({
     overall_score: overall,
@@ -104,15 +114,15 @@ export function demoScoring(segments: TranscriptSegment[]): ScoringResult {
     summary: [
       "Demo scoring used (DEMO_MODE or missing GEMINI_API_KEY).",
       `Transcript segments: ${segments.length}.`,
-      `Approx interviewer talk share: ${Math.round(ratio * 100)}%.`,
-      "Structure looked present in mock flow.",
+      `Approx interviewee talk share: ${Math.round(ratio * 100)}%.`,
+      "Answers showed basic structure in mock flow.",
       "Replace with live Gemini scoring in production.",
     ],
-    strengths: ["Kept conversation moving", "Covered core topics"],
+    strengths: ["Clear verbal delivery", "Engaged with questions"],
     improvement_tips: [
-      "Leave more silence after candidate answers before follow-ups",
-      "Balance talk time closer to 40/60 interviewer/candidate",
-      "Ask one clarifying question before moving topics",
+      "Add concrete metrics / outcomes to stories",
+      "State tradeoffs before jumping to a solution",
+      "Ask one clarifying question when prompts are ambiguous",
     ],
   });
 }
@@ -137,13 +147,14 @@ async function callGemini(prompt: string): Promise<string> {
 export async function scoreTranscript(
   sessionId: string,
   segments: TranscriptSegment[],
+  meta?: { interviewerName?: string; candidateLabel?: string },
 ): Promise<ScoringResult> {
   if (env.demoMode || !env.geminiApiKey) {
     log(sessionId, "scoring_demo_mode");
     return demoScoring(segments);
   }
 
-  const prompt = buildScoringPrompt(segments);
+  const prompt = buildScoringPrompt(segments, meta);
   try {
     const raw = await callGemini(prompt);
     const parsed = ScoringResultSchema.parse(extractJson(raw));
@@ -161,7 +172,6 @@ Your previous answer was invalid. Reply with ONLY the JSON object matching the s
     } catch (secondErr) {
       const msg2 = secondErr instanceof Error ? secondErr.message : String(secondErr);
       log(sessionId, "scoring_failed_fallback_demo", { error: msg2 });
-      // Quota / network / parse: keep demo flowing instead of hard-failing the session
       if (/429|quota|rate limit|fetch/i.test(msg2) || /429|quota|rate limit|fetch/i.test(msg)) {
         return demoScoring(segments);
       }

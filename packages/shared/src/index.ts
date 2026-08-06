@@ -24,13 +24,14 @@ export const TranscriptSegmentSchema = z.object({
 });
 export type TranscriptSegment = z.infer<typeof TranscriptSegmentSchema>;
 
+/** Interviewee (candidate) performance rubric. */
 export const SubScoresSchema = z.object({
+  problem_solving: z.number().min(0).max(100),
+  communication: z.number().min(0).max(100),
   structure: z.number().min(0).max(100),
-  active_listening: z.number().min(0).max(100),
-  clarity: z.number().min(0).max(100),
-  time_management: z.number().min(0).max(100),
-  fairness: z.number().min(0).max(100),
-  candidate_experience: z.number().min(0).max(100),
+  depth: z.number().min(0).max(100),
+  collaboration: z.number().min(0).max(100),
+  professionalism: z.number().min(0).max(100),
 });
 export type SubScores = z.infer<typeof SubScoresSchema>;
 
@@ -66,6 +67,7 @@ export const WsClientMessageSchema = z.discriminatedUnion("type", [
     type: z.literal("start"),
     sessionId: z.string().uuid(),
     interviewerId: z.string().optional(),
+    /** Meet display name of the interviewer (extension user). */
     interviewerName: z.string().optional(),
     mimeType: z.string().optional(),
     /** linear16 PCM @ 16kHz mono preferred for Deepgram */
@@ -147,19 +149,19 @@ export function interviewerTalkShare(
 }
 
 export const RUBRIC_WEIGHTS = {
-  structure: 0.2,
-  active_listening: 0.2,
-  clarity: 0.15,
-  time_management: 0.15,
-  fairness: 0.15,
-  candidate_experience: 0.15,
+  problem_solving: 0.2,
+  communication: 0.2,
+  structure: 0.15,
+  depth: 0.15,
+  collaboration: 0.15,
+  professionalism: 0.15,
 } as const;
 
 export const SUB_SCORE_LABELS: Record<keyof SubScores, string> = {
-  structure: "Structure & Preparation",
-  active_listening: "Active Listening",
-  clarity: "Communication Clarity",
-  time_management: "Time Management",
-  fairness: "Fairness & Bias Signals",
-  candidate_experience: "Candidate Experience",
+  problem_solving: "Problem Solving",
+  communication: "Communication",
+  structure: "Answer Structure",
+  depth: "Technical / Role Depth",
+  collaboration: "Collaboration Signals",
+  professionalism: "Professionalism",
 };
