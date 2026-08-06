@@ -7,7 +7,7 @@ npm run build:shared
 npm run build:extension
 ```
 
-Output: `apps/extension/dist/` (manifest **0.3.0**)
+Output: `apps/extension/dist/` (manifest **0.3.1**)
 
 ## Chrome — load unpacked
 
@@ -20,13 +20,27 @@ Output: `apps/extension/dist/` (manifest **0.3.0**)
    - Dashboard: `http://localhost:5173`
    - Supabase URL + anon key (pre-filled from build env if present)
 5. Save
-6. For Google sign-in: copy the redirect URL shown on Options into Supabase → Authentication → URL configuration → Redirect URLs
 
 ## Sign-in (required)
 
-Popup requires the **same** Supabase user as the dashboard (email/password or Google).
+Use the **same** Supabase user as the dashboard (email/password or Google).
 
-Before Start:
+### Google OAuth (one-time setup)
+
+Chrome strips URL hashes, so Artemis uses **PKCE** (`?code=`) via the service worker — not the popup.
+
+1. After loading unpacked, copy the redirect URL from Options or the popup hint  
+   (`https://<extension-id>.chromiumapp.org/supabase`)
+2. Supabase → Authentication → URL Configuration → **Redirect URLs** → add that exact URL
+3. Enable the Google provider
+4. Click **Continue with Google** in the popup
+
+Re-load unpacked = new extension ID → update the Redirect URL again.
+
+Email/password works without the redirect step.
+
+### Before Start
+
 1. Enter **Your Meet display name** (exactly as shown in Google Meet) — you are the interviewer
 2. After Start, **speak first** so diarization tags your voice as interviewer; the other speaker is the interviewee
 

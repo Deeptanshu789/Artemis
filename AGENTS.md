@@ -118,7 +118,12 @@ npm run verify            # health + fixture smoke
 4. Replace interim `design/*.md` if final UI exists; re-skin.
 5. Commit/push remaining monorepo files (never commit `.env`).
 
-### 2026-08-07 — Interviewee scoring + extension auth sync
+### 2026-08-07 — Fix extension Google OAuth (PKCE)
+
+- Root cause: implicit hash tokens stripped by `chrome.identity`; popup OAuth killed PKCE verifier.
+- Fix: `flowType: "pkce"` + `chrome.storage.local` adapter; Google sign-in runs in service worker; redirect `…/supabase`.
+- Manifest `0.3.1`. No AI watermarks in commits/UI.
+
 
 - Rubric flipped: scores **interviewee** (`problem_solving`, `communication`, `structure`, `depth`, `collaboration`, `professionalism`).
 - Default model `gemini-2.5-flash`.
