@@ -55,9 +55,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const continueAsGuest = () => {
-    setViewer(GUEST_ID, "Guest Interviewer");
+    setViewer(GUEST_ID, "Guest");
     localStorage.setItem("artemis_authed", "1");
-    setUser({ id: GUEST_ID, name: "Guest Interviewer", isGuest: true });
+    setUser({ id: GUEST_ID, name: "Guest", isGuest: true });
   };
 
   const signInWithGoogle = async () => {

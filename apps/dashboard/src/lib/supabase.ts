@@ -17,7 +17,7 @@ const GUEST_KEY = "artemis_guest";
 export function getGuestIdentity(): { id: string; name: string } {
   const raw = localStorage.getItem(GUEST_KEY);
   if (raw) return JSON.parse(raw);
-  const identity = { id: GUEST_ID, name: "Guest Interviewer" };
+  const identity = { id: GUEST_ID, name: "Guest" };
   localStorage.setItem(GUEST_KEY, JSON.stringify(identity));
   return identity;
 }

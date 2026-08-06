@@ -11,14 +11,14 @@ export function PrivacyPage() {
         <ul className="list-disc pl-5 text-sm text-muted space-y-1">
           <li>Transcript segments and speaker labels</li>
           <li>HR rubric scores, summary, and tips for the interviewee</li>
-          <li>Timestamps and account identity of the person who ran the session</li>
+          <li>Timestamps and your account identity</li>
         </ul>
       </section>
       <section className="space-y-2">
         <h2 className="text-sm font-semibold">Access & delete</h2>
         <p className="text-sm text-muted">
-          Sessions are scoped to your signed-in account (or guest identity). Delete any session from
-          the session detail page. Production deployments should add org-level retention policies.
+          Sessions are scoped to your signed-in account (or guest identity). Delete any session from the
+          session detail page. Production deployments should add org-level retention policies.
         </p>
       </section>
       <section className="space-y-2">

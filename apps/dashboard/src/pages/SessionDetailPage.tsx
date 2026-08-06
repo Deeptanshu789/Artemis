@@ -1,15 +1,9 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import type { Session, SpeakerRole } from "@artemis/shared";
+import type { Session } from "@artemis/shared";
 import { deleteSession, getSession } from "../lib/api";
 import { useAuth } from "../lib/auth";
 import { Scorecard } from "../components/ScoreBar";
-
-function speakerLabel(role: SpeakerRole): string {
-  if (role === "candidate") return "Interviewee";
-  if (role === "interviewer") return "Interviewer";
-  return "Unknown";
-}
 
 export function SessionDetailPage() {
   const { id } = useParams();
@@ -42,26 +36,35 @@ export function SessionDetailPage() {
           <p className="text-xs text-muted mb-4">
             <span className="text-accent">Interviewee</span>
             {" · "}
-            Interviewer ({session.interviewer_name ?? "Meet name"})
+            Host ({session.interviewer_name ?? "Meet name"})
           </p>
           <div className="space-y-3 max-h-[70vh] overflow-y-auto pr-2">
             {session.transcript.length === 0 ? (
               <p className="text-muted">No transcript segments.</p>
             ) : (
-              session.transcript.map((seg) => (
+              session.transcript.map((seg) => {
+                const label =
+                  seg.speaker === "candidate"
+                    ? "Interviewee"
+                    : seg.speaker === "interviewer"
+                      ? "Host"
+                      : "Unknown";
+                const isInterviewee = seg.speaker === "candidate";
+                return (
                 <div
                   key={seg.id}
                   className={`border-l-2 pl-3 ${
-                    seg.speaker === "candidate" ? "border-accent" : "border-border"
+                    isInterviewee ? "border-accent" : "border-border"
                   }`}
                 >
                   <p className="text-xs text-muted uppercase tracking-wide">
-                    {speakerLabel(seg.speaker)}
+                    {label}
                     {seg.startMs != null ? ` · ${Math.round(seg.startMs / 1000)}s` : ""}
                   </p>
                   <p className="mt-1 text-sm">{seg.text}</p>
                 </div>
-              ))
+                );
+              })
             )}
           </div>
         </section>
