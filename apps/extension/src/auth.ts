@@ -1,4 +1,4 @@
-import { createClient, type Session as SbSession, type User } from "@supabase/supabase-js";
+import { createClient, type Session as SbSession, type SupabaseClient } from "@supabase/supabase-js";
 import { loadEndpoints } from "./config";
 
 export type AuthUser = {
@@ -8,6 +8,26 @@ export type AuthUser = {
 };
 
 const AUTH_KEYS = ["sbAccessToken", "sbRefreshToken", "userId", "userEmail", "userName"] as const;
+
+/** chrome.storage.local bridge — service workers have no localStorage (PKCE needs this). */
+const chromeStorage = {
+  getItem: async (key: string): Promise<string | null> => {
+    const result = await chrome.storage.local.get(key);
+    const v = result[key];
+    return typeof v === "string" ? v : v == null ? null : JSON.stringify(v);
+  },
+  setItem: async (key: string, value: string): Promise<void> => {
+    await chrome.storage.local.set({ [key]: value });
+  },
+  removeItem: async (key: string): Promise<void> => {
+    await chrome.storage.local.remove(key);
+  },
+};
+
+export function oauthRedirectUrl(): string {
+  // Stable path for Supabase allowlist: https://<ext-id>.chromiumapp.org/supabase
+  return chrome.identity.getRedirectURL("supabase");
+}
 
 export async function getStoredAuth(): Promise<AuthUser | null> {
   const stored = await chrome.storage.local.get([...AUTH_KEYS]);
@@ -48,23 +68,39 @@ async function persistSession(session: SbSession): Promise<AuthUser> {
 
 export async function clearAuth(): Promise<void> {
   await chrome.storage.local.remove([...AUTH_KEYS, "interviewerId", "interviewerName"]);
+  try {
+    const ep = await loadEndpoints();
+    if (ep.supabaseUrl && ep.supabaseAnonKey) {
+      const sb = createSb(ep.supabaseUrl, ep.supabaseAnonKey);
+      await sb.auth.signOut({ scope: "local" });
+    }
+  } catch {
+    /* ignore */
+  }
 }
 
-function createSb(url: string, anon: string) {
+function createSb(url: string, anon: string): SupabaseClient {
   return createClient(url, anon, {
     auth: {
-      persistSession: false,
-      autoRefreshToken: false,
+      storage: chromeStorage,
+      persistSession: true,
+      autoRefreshToken: true,
       detectSessionInUrl: false,
+      flowType: "pkce",
     },
   });
 }
 
-export async function signInWithPassword(email: string, password: string): Promise<AuthUser> {
+async function requireEndpoints() {
   const ep = await loadEndpoints();
   if (!ep.supabaseUrl || !ep.supabaseAnonKey) {
     throw new Error("Set Supabase URL + anon key in extension Options.");
   }
+  return ep;
+}
+
+export async function signInWithPassword(email: string, password: string): Promise<AuthUser> {
+  const ep = await requireEndpoints();
   const sb = createSb(ep.supabaseUrl, ep.supabaseAnonKey);
   const { data, error } = await sb.auth.signInWithPassword({ email, password });
   if (error || !data.session) throw new Error(error?.message ?? "Sign-in failed");
@@ -76,10 +112,7 @@ export async function signUpWithPassword(
   password: string,
   fullName?: string,
 ): Promise<AuthUser> {
-  const ep = await loadEndpoints();
-  if (!ep.supabaseUrl || !ep.supabaseAnonKey) {
-    throw new Error("Set Supabase URL + anon key in extension Options.");
-  }
+  const ep = await requireEndpoints();
   const sb = createSb(ep.supabaseUrl, ep.supabaseAnonKey);
   const { data, error } = await sb.auth.signUp({
     email,
@@ -93,62 +126,86 @@ export async function signUpWithPassword(
   return persistSession(data.session);
 }
 
-/** Google OAuth via chrome.identity.launchWebAuthFlow → Supabase session. */
-export async function signInWithGoogle(): Promise<AuthUser> {
-  const ep = await loadEndpoints();
-  if (!ep.supabaseUrl || !ep.supabaseAnonKey) {
-    throw new Error("Set Supabase URL + anon key in extension Options.");
-  }
-
-  const redirectTo = chrome.identity.getRedirectURL();
-  const authorize = new URL(`${ep.supabaseUrl.replace(/\/$/, "")}/auth/v1/authorize`);
-  authorize.searchParams.set("provider", "google");
-  authorize.searchParams.set("redirect_to", redirectTo);
-
-  const responseUrl = await new Promise<string>((resolve, reject) => {
-    chrome.identity.launchWebAuthFlow(
-      { url: authorize.toString(), interactive: true },
-      (url) => {
-        if (chrome.runtime.lastError || !url) {
-          reject(new Error(chrome.runtime.lastError?.message ?? "OAuth cancelled"));
-          return;
-        }
-        resolve(url);
-      },
-    );
+function launchWebAuthFlow(url: string): Promise<string> {
+  return new Promise((resolve, reject) => {
+    chrome.identity.launchWebAuthFlow({ url, interactive: true }, (responseUrl) => {
+      if (chrome.runtime.lastError || !responseUrl) {
+        reject(new Error(chrome.runtime.lastError?.message ?? "OAuth cancelled or blocked"));
+        return;
+      }
+      resolve(responseUrl);
+    });
   });
+}
 
-  const hash = new URL(responseUrl).hash.replace(/^#/, "");
-  const params = new URLSearchParams(hash);
-  const access_token = params.get("access_token");
-  const refresh_token = params.get("refresh_token");
-  if (!access_token || !refresh_token) {
-    throw new Error("OAuth did not return tokens. Add redirect URL in Supabase Auth settings.");
+/**
+ * Google OAuth via PKCE + chrome.identity.
+ * Must run in the service worker (not popup) so PKCE verifier survives the OAuth window.
+ * chrome.identity strips URL hashes — implicit flow cannot work; PKCE ?code= is required.
+ */
+export async function signInWithGoogle(): Promise<AuthUser> {
+  const ep = await requireEndpoints();
+  const sb = createSb(ep.supabaseUrl, ep.supabaseAnonKey);
+  const redirectTo = oauthRedirectUrl();
+
+  const { data, error } = await sb.auth.signInWithOAuth({
+    provider: "google",
+    options: {
+      redirectTo,
+      skipBrowserRedirect: true,
+      queryParams: {
+        access_type: "offline",
+        prompt: "select_account",
+      },
+    },
+  });
+  if (error || !data.url) {
+    throw new Error(error?.message ?? "Could not start Google sign-in");
   }
 
-  const sb = createSb(ep.supabaseUrl, ep.supabaseAnonKey);
-  const { data, error } = await sb.auth.setSession({ access_token, refresh_token });
-  if (error || !data.session) throw new Error(error?.message ?? "Failed to set session");
-  return persistSession(data.session);
+  const responseUrl = await launchWebAuthFlow(data.url);
+  const parsed = new URL(responseUrl);
+  const code = parsed.searchParams.get("code");
+  if (!code) {
+    const errDesc =
+      parsed.searchParams.get("error_description") ||
+      parsed.searchParams.get("error") ||
+      "No auth code returned";
+    throw new Error(
+      `${errDesc}. Add this redirect URL in Supabase → Authentication → URL Configuration: ${redirectTo}`,
+    );
+  }
+
+  const { data: sessionData, error: exchangeError } = await sb.auth.exchangeCodeForSession(code);
+  if (exchangeError || !sessionData.session) {
+    throw new Error(exchangeError?.message ?? "Failed to exchange OAuth code");
+  }
+  return persistSession(sessionData.session);
 }
 
 export async function refreshAuthIfNeeded(): Promise<AuthUser | null> {
-  const stored = await chrome.storage.local.get([...AUTH_KEYS]);
-  if (!stored.sbAccessToken || !stored.sbRefreshToken) return getStoredAuth();
-
   const ep = await loadEndpoints();
   if (!ep.supabaseUrl || !ep.supabaseAnonKey) return getStoredAuth();
 
   const sb = createSb(ep.supabaseUrl, ep.supabaseAnonKey);
-  const { data, error } = await sb.auth.setSession({
-    access_token: stored.sbAccessToken as string,
-    refresh_token: stored.sbRefreshToken as string,
-  });
+  const { data, error } = await sb.auth.getSession();
   if (error || !data.session) {
-    await clearAuth();
+    const stored = await getStoredAuth();
+    if (!stored) return null;
+    // Try hydrate from our mirrored tokens
+    const tokens = await chrome.storage.local.get(["sbAccessToken", "sbRefreshToken"]);
+    if (tokens.sbAccessToken && tokens.sbRefreshToken) {
+      const { data: setData, error: setErr } = await sb.auth.setSession({
+        access_token: tokens.sbAccessToken as string,
+        refresh_token: tokens.sbRefreshToken as string,
+      });
+      if (setErr || !setData.session) {
+        await clearAuth();
+        return null;
+      }
+      return persistSession(setData.session);
+    }
     return null;
   }
   return persistSession(data.session);
 }
-
-export type { User };

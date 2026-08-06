@@ -188,3 +188,11 @@ button.link {
   font-weight: 500;
   font-size: 12px;
 }
+
+code {
+  display: block;
+  margin-top: 4px;
+  word-break: break-all;
+  color: var(--accent);
+  font-size: 10px;
+}

@@ -239,6 +239,19 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
       sendResponse({ state });
       return;
     }
+    if (message?.type === "signInGoogle") {
+      try {
+        const { signInWithGoogle } = await import("../auth");
+        const user = await signInWithGoogle();
+        sendResponse({ ok: true, user });
+      } catch (err) {
+        sendResponse({
+          ok: false,
+          error: err instanceof Error ? err.message : String(err),
+        });
+      }
+      return;
+    }
     if (message?.type === "start") {
       const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
       if (!tab?.id || !tab.url?.includes("meet.google.com")) {

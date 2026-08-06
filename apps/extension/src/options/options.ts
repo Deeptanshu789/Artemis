@@ -6,7 +6,7 @@ const supabaseAnonKey = document.getElementById("supabaseAnonKey") as HTMLInputE
 const statusEl = document.getElementById("status")!;
 const redirectEl = document.getElementById("redirect")!;
 
-redirectEl.textContent = chrome.identity.getRedirectURL();
+redirectEl.textContent = chrome.identity.getRedirectURL("supabase");
 
 chrome.storage.sync.get(
   ["apiHttp", "apiWs", "dashboardUrl", "supabaseUrl", "supabaseAnonKey"],

@@ -4,8 +4,8 @@ import {
   clearAuth,
   getMeetDisplayName,
   getStoredAuth,
+  oauthRedirectUrl,
   setMeetDisplayName,
-  signInWithGoogle,
   signInWithPassword,
   signUpWithPassword,
   type AuthUser,
@@ -28,6 +28,7 @@ const passwordEl = document.getElementById("password") as HTMLInputElement;
 const authError = document.getElementById("auth-error")!;
 const userLabel = document.getElementById("user-label")!;
 const meetNameEl = document.getElementById("meet-name") as HTMLInputElement;
+const redirectHint = document.getElementById("redirect-hint");
 
 const statusText = document.getElementById("status-text")!;
 const dot = document.getElementById("dot")!;
@@ -40,6 +41,7 @@ const report = document.getElementById("report") as HTMLAnchorElement;
 const errorEl = document.getElementById("error")!;
 const startBtn = document.getElementById("start") as HTMLButtonElement;
 const stopBtn = document.getElementById("stop") as HTMLButtonElement;
+const googleBtn = document.getElementById("google") as HTMLButtonElement;
 
 let authUser: AuthUser | null = null;
 
@@ -66,6 +68,9 @@ function showLoggedOut() {
   authUser = null;
   authPanel.hidden = false;
   appPanel.hidden = true;
+  if (redirectHint) {
+    redirectHint.textContent = oauthRedirectUrl();
+  }
 }
 
 function render(state: State) {
@@ -135,14 +140,23 @@ document.getElementById("signup")!.addEventListener("click", () => {
   })();
 });
 
-document.getElementById("google")!.addEventListener("click", () => {
+googleBtn.addEventListener("click", () => {
   void (async () => {
     clearAuthError();
+    googleBtn.disabled = true;
+    googleBtn.textContent = "Opening Google…";
     try {
-      const user = await signInWithGoogle();
-      await showLoggedIn(user);
+      // Service worker keeps PKCE verifier alive while OAuth window is open.
+      const res = await chrome.runtime.sendMessage({ type: "signInGoogle" });
+      if (!res?.ok) {
+        throw new Error(res?.error ?? "Google sign-in failed");
+      }
+      await showLoggedIn(res.user as AuthUser);
     } catch (e) {
       showAuthError(e instanceof Error ? e.message : String(e));
+    } finally {
+      googleBtn.disabled = false;
+      googleBtn.textContent = "Continue with Google";
     }
   })();
 });
