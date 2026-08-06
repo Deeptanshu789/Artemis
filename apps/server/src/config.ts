@@ -7,7 +7,7 @@ dotenv.config({ path: path.resolve(__dirname, "../../../.env"), override: true }
 dotenv.config({ path: path.resolve(__dirname, "../.env"), override: true });
 
 function required(name: string, fallback?: string): string {
-  const v = process.env[name] ?? fallback;
+  const v = (process.env[name] ?? fallback)?.trim();
   if (v === undefined || v === "") {
     if (process.env.DEMO_MODE === "true" || process.env.NODE_ENV === "test") {
       return fallback ?? "";
@@ -57,7 +57,7 @@ export const env = {
   /** Mistral API — https://docs.mistral.ai/api/ */
   mistralApiKey: required("MISTRAL_API_KEY"),
   /** Default: mistral-small-latest — https://docs.mistral.ai/getting-started/models/ */
-  mistralModel: process.env.MISTRAL_MODEL ?? "mistral-small-latest",
+  mistralModel: (process.env.MISTRAL_MODEL ?? "mistral-small-latest").trim(),
   /** When true, LLM failures fall back to heuristic demo scores (dev only). */
   scoringFallbackDemo: process.env.SCORING_FALLBACK_DEMO === "true",
   supabaseUrl: required("SUPABASE_URL"),
