@@ -1,4 +1,4 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { GoogleGenAI } from "@google/genai";
 import {
   ScoringResultSchema,
   type ScoringResult,
@@ -8,6 +8,14 @@ import {
 } from "@artemis/shared";
 import { env } from "../config.js";
 import { log } from "./sessionStore.js";
+
+/** Official Gemini API model ids (see https://ai.google.dev/gemini-api/docs/models). */
+const MODEL_CANDIDATES = [
+  env.geminiModel,
+  "gemini-2.5-flash",
+  "gemini-2.5-flash-lite",
+  "gemini-2.0-flash",
+].filter((m, i, arr) => m && arr.indexOf(m) === i);
 
 function formatTranscript(segments: TranscriptSegment[]): string {
   if (!segments.length) return "(empty transcript)";
@@ -112,7 +120,7 @@ export function demoScoring(segments: TranscriptSegment[]): ScoringResult {
     overall_score: overall,
     sub_scores: base,
     summary: [
-      "Demo scoring used (DEMO_MODE or missing GEMINI_API_KEY).",
+      "Demo scoring used (DEMO_MODE or SCORING_FALLBACK_DEMO).",
       `Transcript segments: ${segments.length}.`,
       `Approx interviewee talk share: ${Math.round(ratio * 100)}%.`,
       "Answers showed basic structure in mock flow.",
@@ -127,21 +135,44 @@ export function demoScoring(segments: TranscriptSegment[]): ScoringResult {
   });
 }
 
-async function callGemini(prompt: string): Promise<string> {
-  const genAI = new GoogleGenerativeAI(env.geminiApiKey);
-  const model = genAI.getGenerativeModel({
-    model: env.geminiModel,
-    generationConfig: {
+function responseText(result: { text?: string; candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }> }): string {
+  if (typeof result.text === "string" && result.text.trim()) return result.text;
+  const parts = result.candidates?.[0]?.content?.parts ?? [];
+  const joined = parts.map((p) => p.text ?? "").join("");
+  if (joined.trim()) return joined;
+  throw new Error("Gemini returned empty response");
+}
+
+async function callGemini(prompt: string, model: string): Promise<string> {
+  const ai = new GoogleGenAI({ apiKey: env.geminiApiKey });
+  const result = await ai.models.generateContent({
+    model,
+    contents: prompt,
+    config: {
       temperature: 0.2,
       responseMimeType: "application/json",
     },
   });
-  const result = await model.generateContent(prompt);
-  const text = result.response.text();
-  if (!text?.trim()) {
-    throw new Error("Gemini returned empty response");
+  return responseText(result);
+}
+
+async function callGeminiWithFallback(prompt: string): Promise<{ text: string; model: string }> {
+  const errors: string[] = [];
+  for (const model of MODEL_CANDIDATES) {
+    try {
+      const text = await callGemini(prompt, model);
+      return { text, model };
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      errors.push(`${model}: ${msg}`);
+      log(undefined, "gemini_model_failed", { model, error: msg.slice(0, 400) });
+      // Try next model on not-found / unsupported; keep trying on 429 too in case another tier works
+      continue;
+    }
   }
-  return text;
+  throw new Error(
+    `Gemini scoring failed for models [${MODEL_CANDIDATES.join(", ")}]. ${errors.join(" | ")}`,
+  );
 }
 
 export async function scoreTranscript(
@@ -156,26 +187,34 @@ export async function scoreTranscript(
 
   const prompt = buildScoringPrompt(segments, meta);
   try {
-    const raw = await callGemini(prompt);
+    const { text: raw, model } = await callGeminiWithFallback(prompt);
     const parsed = ScoringResultSchema.parse(extractJson(raw));
-    log(sessionId, "scoring_ok", { overall: parsed.overall_score, model: env.geminiModel });
+    log(sessionId, "scoring_ok", { overall: parsed.overall_score, model });
     return parsed;
   } catch (firstErr) {
     const msg = firstErr instanceof Error ? firstErr.message : String(firstErr);
-    log(sessionId, "scoring_parse_retry", { error: msg });
+    log(sessionId, "scoring_parse_retry", { error: msg.slice(0, 500) });
     const repairPrompt = `${prompt}
 
 Your previous answer was invalid. Reply with ONLY the JSON object matching the schema.`;
     try {
-      const raw2 = await callGemini(repairPrompt);
-      return ScoringResultSchema.parse(extractJson(raw2));
+      const { text: raw2, model } = await callGeminiWithFallback(repairPrompt);
+      const parsed = ScoringResultSchema.parse(extractJson(raw2));
+      log(sessionId, "scoring_ok_repair", { overall: parsed.overall_score, model });
+      return parsed;
     } catch (secondErr) {
       const msg2 = secondErr instanceof Error ? secondErr.message : String(secondErr);
-      log(sessionId, "scoring_failed_fallback_demo", { error: msg2 });
-      if (/429|quota|rate limit|fetch/i.test(msg2) || /429|quota|rate limit|fetch/i.test(msg)) {
+      // Only fall back to heuristic demo when explicitly allowed — otherwise surface the Gemini error
+      if (env.scoringFallbackDemo) {
+        log(sessionId, "scoring_failed_fallback_demo", { error: msg2.slice(0, 500) });
         return demoScoring(segments);
       }
-      throw secondErr;
+      log(sessionId, "scoring_failed", { error: msg2.slice(0, 800) });
+      throw new Error(
+        /429|quota|rate limit|RESOURCE_EXHAUSTED/i.test(msg2)
+          ? `Gemini quota exhausted (model ${env.geminiModel}). Create an AI Studio key with Generate Content quota, or set SCORING_FALLBACK_DEMO=true. ${msg2.slice(0, 240)}`
+          : `Gemini scoring failed: ${msg2.slice(0, 400)}`,
+      );
     }
   }
 }

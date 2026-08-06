@@ -1,4 +1,4 @@
-import { loadEndpoints, DASHBOARD_URL } from "../config";
+import { loadEndpoints, DASHBOARD_URL, normalizeDashboardUrl } from "../config";
 import { getMeetDisplayName, getStoredAuth } from "../session";
 import { signInWithGoogle } from "../googleAuth";
 import type { ScoringResult, SessionStatus, WsServerMessage } from "@artemis/shared";
@@ -137,7 +137,7 @@ function connectWs(
 async function startCapture(tabId: number, meetDisplayName?: string): Promise<void> {
   try {
     const endpoints = await loadEndpoints();
-    state.dashboardUrl = endpoints.dashboardUrl;
+    state.dashboardUrl = normalizeDashboardUrl(endpoints.dashboardUrl, endpoints.apiHttp);
 
     const auth = await getStoredAuth();
     if (!auth) {

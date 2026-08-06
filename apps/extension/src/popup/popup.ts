@@ -1,4 +1,4 @@
-import { DASHBOARD_URL } from "../config";
+import { DASHBOARD_URL, loadEndpoints, sessionReportUrl } from "../config";
 import type { ScoringResult } from "@artemis/shared";
 import {
   clearAuth,
@@ -94,7 +94,7 @@ function render(state: State) {
     errorEl.hidden = true;
   }
 
-  if (state.status === "ready" && state.scoring) {
+  if (state.status === "ready" && state.scoring && state.sessionId) {
     result.hidden = false;
     scoreEl.textContent = String(Math.round(state.scoring.overall_score));
     tips.innerHTML = "";
@@ -103,10 +103,15 @@ function render(state: State) {
       li.textContent = tip;
       tips.appendChild(li);
     }
-    const base = state.dashboardUrl ?? DASHBOARD_URL;
-    report.href = `${base}/sessions/${state.sessionId}`;
+    void loadEndpoints().then((ep) => {
+      report.href = sessionReportUrl(
+        ep.dashboardUrl || state.dashboardUrl || DASHBOARD_URL,
+        state.sessionId!,
+      );
+    });
   } else {
     result.hidden = true;
+    report.href = "#";
   }
 }
 
@@ -146,7 +151,6 @@ googleBtn.addEventListener("click", () => {
     googleBtn.disabled = true;
     googleBtn.textContent = "Opening Google…";
     try {
-      // Service worker keeps PKCE verifier alive while OAuth window is open.
       const res = await chrome.runtime.sendMessage({ type: "signInGoogle" });
       if (!res?.ok) {
         throw new Error(res?.error ?? "Google sign-in failed");
@@ -170,6 +174,18 @@ document.getElementById("signout")!.addEventListener("click", () => {
 
 meetNameEl.addEventListener("change", () => {
   void setMeetDisplayName(meetNameEl.value);
+});
+
+report.addEventListener("click", (ev) => {
+  ev.preventDefault();
+  void (async () => {
+    const ep = await loadEndpoints();
+    const stateRes = await chrome.runtime.sendMessage({ type: "getState" });
+    const sessionId = stateRes?.state?.sessionId as string | undefined;
+    if (!sessionId) return;
+    const url = sessionReportUrl(ep.dashboardUrl, sessionId);
+    await chrome.tabs.create({ url });
+  })();
 });
 
 startBtn.addEventListener("click", () => {
@@ -206,6 +222,9 @@ chrome.runtime.onMessage.addListener((msg) => {
 });
 
 void (async () => {
+  // Heal Options that pointed dashboard at the API (:3001 returns JSON)
+  const ep = await loadEndpoints();
+  await chrome.storage.sync.set({ dashboardUrl: ep.dashboardUrl });
   const user = await getStoredAuth();
   if (user) await showLoggedIn(user);
   else showLoggedOut();

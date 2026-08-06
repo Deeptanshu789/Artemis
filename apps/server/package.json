@@ -18,7 +18,7 @@
   "dependencies": {
     "@artemis/shared": "*",
     "@deepgram/sdk": "^3.11.2",
-    "@google/generative-ai": "^0.24.0",
+    "@google/genai": "^2.16.0",
     "@supabase/supabase-js": "^2.49.1",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",

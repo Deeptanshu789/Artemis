@@ -19,6 +19,29 @@ const DEFAULTS: ArtemisEndpoints = {
   supabaseAnonKey: BUILD_DEFAULTS.supabaseAnonKey || "",
 };
 
+/** Never point the dashboard URL at the API (that returns session JSON). */
+export function normalizeDashboardUrl(raw: string, apiHttp?: string): string {
+  let url = (raw || "").trim().replace(/\/$/, "");
+  const api = (apiHttp || DEFAULTS.apiHttp).trim().replace(/\/$/, "");
+  if (!url || url === api) {
+    url = (DEFAULTS.dashboardUrl || "http://localhost:5173").replace(/\/$/, "");
+  }
+  try {
+    const u = new URL(url);
+    if (u.port === "3001") {
+      return "http://localhost:5173";
+    }
+  } catch {
+    return "http://localhost:5173";
+  }
+  return url;
+}
+
+export function sessionReportUrl(dashboardUrl: string, sessionId: string): string {
+  const base = normalizeDashboardUrl(dashboardUrl);
+  return `${base}/sessions/${sessionId}`;
+}
+
 export async function loadEndpoints(): Promise<ArtemisEndpoints> {
   const stored = await chrome.storage.sync.get([
     "apiHttp",
@@ -27,10 +50,14 @@ export async function loadEndpoints(): Promise<ArtemisEndpoints> {
     "supabaseUrl",
     "supabaseAnonKey",
   ]);
+  const apiHttp = (stored.apiHttp as string) || DEFAULTS.apiHttp;
   return {
-    apiHttp: (stored.apiHttp as string) || DEFAULTS.apiHttp,
+    apiHttp,
     apiWs: (stored.apiWs as string) || DEFAULTS.apiWs,
-    dashboardUrl: (stored.dashboardUrl as string) || DEFAULTS.dashboardUrl,
+    dashboardUrl: normalizeDashboardUrl(
+      (stored.dashboardUrl as string) || DEFAULTS.dashboardUrl,
+      apiHttp,
+    ),
     supabaseUrl: (stored.supabaseUrl as string) || DEFAULTS.supabaseUrl,
     supabaseAnonKey: (stored.supabaseAnonKey as string) || DEFAULTS.supabaseAnonKey,
   };
@@ -39,4 +66,4 @@ export async function loadEndpoints(): Promise<ArtemisEndpoints> {
 /** Build-time defaults (popup may prefer loadEndpoints). */
 export const API_HTTP = DEFAULTS.apiHttp;
 export const API_WS = DEFAULTS.apiWs;
-export const DASHBOARD_URL = DEFAULTS.dashboardUrl;
+export const DASHBOARD_URL = normalizeDashboardUrl(DEFAULTS.dashboardUrl, DEFAULTS.apiHttp);

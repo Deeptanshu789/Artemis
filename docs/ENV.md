@@ -7,7 +7,9 @@ Copy `.env.example` to `.env` at the repo root (and/or `apps/server/.env`).
 | Variable | Used by | Notes |
 |----------|---------|-------|
 | `DEEPGRAM_API_KEY` | server | Streaming STT + diarization |
-| `GEMINI_API_KEY` | server | Google Gemini scoring (`GEMINI_MODEL`, default `gemini-2.5-flash`) |
+| `GEMINI_API_KEY` | server | Google AI Studio key for Gemini ([models](https://ai.google.dev/gemini-api/docs/models)). Prefer keys starting with `AIza` |
+| `GEMINI_MODEL` | server | Default `gemini-2.5-flash` |
+| `SCORING_FALLBACK_DEMO` | server | `true` = on Gemini failure use heuristic scores; default off so quota errors surface |
 | `DATABASE_URL` | server (Drizzle) | Postgres URI from Supabase → Database settings — needed for `db:push` + `seed` |
 | `SUPABASE_DB_PASSWORD` | server | Optional alt to build pooler URI if `DATABASE_URL` unset |
 | `SUPABASE_URL` | server, dashboard | Project URL |

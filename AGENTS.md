@@ -118,7 +118,12 @@ npm run verify            # health + fixture smoke
 4. Replace interim `design/*.md` if final UI exists; re-skin.
 5. Commit/push remaining monorepo files (never commit `.env`).
 
-### 2026-08-07 — Fix extension `window is not defined`
+### 2026-08-07 — Gemini SDK + dashboard report link
+
+- Scoring uses official `@google/genai` with model `gemini-2.5-flash` ([docs](https://ai.google.dev/gemini-api/docs/models)); tries lite/2.0 fallbacks.
+- Removed silent demo fallback unless `SCORING_FALLBACK_DEMO=true` (quota errors now fail the session with a clear message).
+- Extension report link opens dashboard `:5173/sessions/:id` (never API `:3001` JSON). Manifest `0.3.3`.
+
 
 - Cause: Vite modulepreload + supabase-js pulled `document`/`window` into the service worker.
 - Fix: SW uses `session.ts` + manual PKCE `googleAuth.ts` only; supabase-js stays in popup chunk; `modulePreload: false`. Manifest `0.3.2`.
