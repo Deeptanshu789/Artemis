@@ -2,7 +2,7 @@
 
 ## What Artemis is
 
-Chrome extension that listens to a Google Meet interview, transcribes with Deepgram, scores the **interviewee** with Gemini 2.5, and stores reports in a React dashboard — synced to the same signed-in account.
+Chrome extension that listens to a Google Meet interview, transcribes with Deepgram, scores the **interviewee** with Mistral, and stores reports in a React dashboard — synced to the same signed-in account.
 
 ## 5-minute demo
 

@@ -1,6 +1,6 @@
 /**
  * E2E fixture: create session → inject transcript → finalize → print scoring.
- * Run with DEMO_MODE=true (no Deepgram/Cursor required).
+ * Run with DEMO_MODE=true (no Deepgram/Mistral required).
  */
 import { randomUUID } from "node:crypto";
 import { createRuntimeSession } from "../ws/audio.js";

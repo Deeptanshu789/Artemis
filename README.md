@@ -1,6 +1,6 @@
 # Artemis — AI Interview Copilot
 
-Chrome extension + Node backend + React dashboard. Captures Google Meet tab audio, transcribes with Deepgram (diarization), scores the **interviewee** via Google Gemini 2.5, stores sessions (Drizzle + Postgres/Supabase) under the signed-in interviewer account, and shows trends in the dashboard.
+Chrome extension + Node backend + React dashboard. Captures Google Meet tab audio, transcribes with Deepgram (diarization), scores the **interviewee** via Mistral, stores sessions (Drizzle + Postgres/Supabase) under the signed-in interviewer account, and shows trends in the dashboard.
 
 ## Monorepo
 
@@ -17,7 +17,7 @@ docs/            ENV, schema, demo script
 
 ```bash
 cp .env.example .env
-# set DEEPGRAM_API_KEY, GEMINI_API_KEY, DATABASE_URL, Supabase keys — or DEMO_MODE=true
+# set DEEPGRAM_API_KEY, MISTRAL_API_KEY, DATABASE_URL, Supabase keys — or DEMO_MODE=true
 
 npm install
 npm run build:shared

@@ -10,7 +10,7 @@ console.log(
   JSON.stringify(
     {
       port: env.port,
-      geminiModel: env.geminiModel,
+      mistralModel: env.mistralModel,
       ...report,
       hint: report.missingForLive.length
         ? "Fill missing keys in .env or keep DEMO_MODE=true"

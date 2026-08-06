@@ -54,10 +54,11 @@ export const env = {
   corsOrigins: parseCorsOrigins(),
   dashboardUrl: process.env.DASHBOARD_URL ?? "http://localhost:5173",
   deepgramApiKey: required("DEEPGRAM_API_KEY"),
-  geminiApiKey: required("GEMINI_API_KEY"),
-  /** Default: gemini-2.5-flash — https://ai.google.dev/gemini-api/docs/models#gemini-2.5-flash */
-  geminiModel: process.env.GEMINI_MODEL ?? "gemini-2.5-flash",
-  /** When true, Gemini failures fall back to heuristic demo scores (dev only). */
+  /** Mistral API — https://docs.mistral.ai/api/ */
+  mistralApiKey: required("MISTRAL_API_KEY"),
+  /** Default: mistral-small-latest — https://docs.mistral.ai/getting-started/models/ */
+  mistralModel: process.env.MISTRAL_MODEL ?? "mistral-small-latest",
+  /** When true, LLM failures fall back to heuristic demo scores (dev only). */
   scoringFallbackDemo: process.env.SCORING_FALLBACK_DEMO === "true",
   supabaseUrl: required("SUPABASE_URL"),
   supabaseAnonKey: required("SUPABASE_ANON_KEY"),

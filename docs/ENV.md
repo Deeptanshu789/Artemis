@@ -7,9 +7,9 @@ Copy `.env.example` to `.env` at the repo root (and/or `apps/server/.env`).
 | Variable | Used by | Notes |
 |----------|---------|-------|
 | `DEEPGRAM_API_KEY` | server | Streaming STT + diarization |
-| `GEMINI_API_KEY` | server | Google AI Studio key for Gemini ([models](https://ai.google.dev/gemini-api/docs/models)). Prefer keys starting with `AIza` |
-| `GEMINI_MODEL` | server | Default `gemini-2.5-flash` |
-| `SCORING_FALLBACK_DEMO` | server | `true` = on Gemini failure use heuristic scores; default off so quota errors surface |
+| `MISTRAL_API_KEY` | server | Mistral API key ([console](https://console.mistral.ai/api-keys)) for interviewee scoring |
+| `MISTRAL_MODEL` | server | Default `mistral-small-latest` ([models](https://docs.mistral.ai/getting-started/models/)) |
+| `SCORING_FALLBACK_DEMO` | server | `true` = on Mistral failure use heuristic scores; default off |
 | `DATABASE_URL` | server (Drizzle) | Postgres URI from Supabase → Database settings — needed for `db:push` + `seed` |
 | `SUPABASE_DB_PASSWORD` | server | Optional alt to build pooler URI if `DATABASE_URL` unset |
 | `SUPABASE_URL` | server, dashboard | Project URL |
@@ -19,7 +19,7 @@ Copy `.env.example` to `.env` at the repo root (and/or `apps/server/.env`).
 | `CORS_ORIGIN` | server | Comma-separated dashboard origins (or `*`). Chrome extension origins always allowed |
 | `DASHBOARD_URL` | server, extension | Deep-links from popup |
 | `ADMIN_TOKEN` | server | Required in production for `/admin/*` (`x-admin-token` header) |
-| `DEMO_MODE` | server | `true` = fixture scoring without live Deepgram/Gemini. Blocked when `NODE_ENV=production` unless `ALLOW_DEMO_IN_PROD=true` |
+| `DEMO_MODE` | server | `true` = fixture scoring without live Deepgram/Mistral. Blocked when `NODE_ENV=production` unless `ALLOW_DEMO_IN_PROD=true` |
 
 Dashboard Vite env (`apps/dashboard/.env`):
 

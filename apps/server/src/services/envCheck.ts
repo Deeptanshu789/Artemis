@@ -9,7 +9,7 @@ export type EnvReport = {
   missingForLive: string[];
   ready: {
     deepgram: boolean;
-    gemini: boolean;
+    mistral: boolean;
     supabase: boolean;
     drizzle: boolean;
   };
@@ -21,7 +21,7 @@ export function validateEnv(): EnvReport {
   const missingForLive: string[] = [];
 
   const deepgram = Boolean(env.deepgramApiKey);
-  const gemini = Boolean(env.geminiApiKey);
+  const mistral = Boolean(env.mistralApiKey);
   const supabase = supabaseConfigured();
   const drizzle = databaseUrlConfigured();
 
@@ -29,7 +29,7 @@ export function validateEnv(): EnvReport {
     warnings.push("DEMO_MODE=true — using fixture STT/scoring; not production.");
   } else {
     if (!deepgram) missingForLive.push("DEEPGRAM_API_KEY");
-    if (!gemini) missingForLive.push("GEMINI_API_KEY");
+    if (!mistral) missingForLive.push("MISTRAL_API_KEY");
     if (!supabase) {
       warnings.push("Supabase unset — REST auth/client limited.");
       missingForLive.push("SUPABASE_URL", "SUPABASE_SERVICE_ROLE_KEY");
@@ -51,10 +51,10 @@ export function validateEnv(): EnvReport {
   }
 
   return {
-    ok: env.demoMode || (deepgram && gemini),
+    ok: env.demoMode || (deepgram && mistral),
     demoMode: env.demoMode,
     warnings,
     missingForLive,
-    ready: { deepgram, gemini, supabase, drizzle },
+    ready: { deepgram, mistral, supabase, drizzle },
   };
 }

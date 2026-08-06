@@ -9,7 +9,7 @@ Extension (MV3)
 
 Server (Express + ws)
   Deepgram live STT + diarization (first speaker = interviewer)
-  finalize → Gemini 2.5 (interviewee JSON rubric)
+  finalize → Mistral (interviewee JSON rubric)
   Drizzle / Postgres + Supabase
   Zod validate → memory + DB upsert
 

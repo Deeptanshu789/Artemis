@@ -4,7 +4,7 @@ Living context for any model/agent continuing this repo. **Append a Change Log e
 
 ## Product
 
-Chrome MV3 extension + Node/Express/`ws` backend + React dashboard. Captures Google Meet tab audio → Deepgram STT (diarization) → **Gemini 2.5** scores the **interviewee** → Drizzle/Postgres + Supabase → dashboard trends (synced to signed-in interviewer).
+Chrome MV3 extension + Node/Express/`ws` backend + React dashboard. Captures Google Meet tab audio → Deepgram STT (diarization) → **Mistral** scores the **interviewee** → Drizzle/Postgres + Supabase → dashboard trends (synced to signed-in interviewer).
 
 ## Repo map
 
@@ -19,7 +19,7 @@ Chrome MV3 extension + Node/Express/`ws` backend + React dashboard. Captures Goo
 
 ## Locked decisions
 
-- No Python. STT = Deepgram. LLM = **Google Gemini** (`GEMINI_API_KEY`, model `gemini-2.5-flash` default). Scores the **interviewee**, not the interviewer.
+- No Python. STT = Deepgram. LLM = **Mistral** (`MISTRAL_API_KEY`, model `mistral-small-latest` default). Scores the **interviewee**, not the interviewer.
 - Extension user = interviewer; must sign in (same Supabase user as dashboard) and enter Meet display name. First speaker after Start = interviewer diarization tag.
 - DB = Supabase Postgres via **Drizzle** for schema push + seed (`DATABASE_URL`). Supabase JS for auth/REST fallback.
 - Meet-only MVP. `DEMO_MODE=true` skips live Deepgram/Gemini.
@@ -27,7 +27,7 @@ Chrome MV3 extension + Node/Express/`ws` backend + React dashboard. Captures Goo
 
 ## Env keys
 
-`DEEPGRAM_API_KEY`, `GEMINI_API_KEY`, `GEMINI_MODEL`, `DATABASE_URL` (or `SUPABASE_DB_PASSWORD`), `SUPABASE_*`, `PORT`, `CORS_ORIGIN`, `DASHBOARD_URL`, `DEMO_MODE`. Dashboard: `VITE_API_BASE`, `VITE_SUPABASE_*`.
+`DEEPGRAM_API_KEY`, `MISTRAL_API_KEY`, `MISTRAL_MODEL`, `DATABASE_URL` (or `SUPABASE_DB_PASSWORD`), `SUPABASE_*`, `PORT`, `CORS_ORIGIN`, `DASHBOARD_URL`, `DEMO_MODE`. Dashboard: `VITE_API_BASE`, `VITE_SUPABASE_*`.
 
 ## Commands
 
@@ -118,7 +118,12 @@ npm run verify            # health + fixture smoke
 4. Replace interim `design/*.md` if final UI exists; re-skin.
 5. Commit/push remaining monorepo files (never commit `.env`).
 
-### 2026-08-07 — Gemini SDK + dashboard report link
+### 2026-08-07 — Switch scoring LLM to Mistral
+
+- Replaced Gemini with Mistral Chat Completions (`MISTRAL_API_KEY`, default model `mistral-small-latest`).
+- Scoring uses `https://api.mistral.ai/v1/chat/completions` + `response_format: json_object`.
+- Removed `@google/genai`. Set key in `.env` from https://console.mistral.ai/api-keys
+
 
 - Scoring uses official `@google/genai` with model `gemini-2.5-flash` ([docs](https://ai.google.dev/gemini-api/docs/models)); tries lite/2.0 fallbacks.
 - Removed silent demo fallback unless `SCORING_FALLBACK_DEMO=true` (quota errors now fail the session with a clear message).

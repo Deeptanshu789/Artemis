@@ -1,4 +1,3 @@
-import { GoogleGenAI } from "@google/genai";
 import {
   ScoringResultSchema,
   type ScoringResult,
@@ -9,12 +8,12 @@ import {
 import { env } from "../config.js";
 import { log } from "./sessionStore.js";
 
-/** Official Gemini API model ids (see https://ai.google.dev/gemini-api/docs/models). */
+/** Mistral model ids — https://docs.mistral.ai/getting-started/models/ */
 const MODEL_CANDIDATES = [
-  env.geminiModel,
-  "gemini-2.5-flash",
-  "gemini-2.5-flash-lite",
-  "gemini-2.0-flash",
+  env.mistralModel,
+  "mistral-small-latest",
+  "mistral-medium-latest",
+  "mistral-large-latest",
 ].filter((m, i, arr) => m && arr.indexOf(m) === i);
 
 function formatTranscript(segments: TranscriptSegment[]): string {
@@ -63,7 +62,7 @@ Dimensions (about the interviewee):
 - collaboration: listening, clarifying questions, teamwork / ownership signals
 - professionalism: tone, honesty about gaps, respect, composure
 
-Return STRICT JSON only (no markdown fences, no prose). Schema:
+Return a JSON object matching this schema (JSON only, no markdown):
 {
   "overall_score": 0-100,
   "sub_scores": {
@@ -124,7 +123,7 @@ export function demoScoring(segments: TranscriptSegment[]): ScoringResult {
       `Transcript segments: ${segments.length}.`,
       `Approx interviewee talk share: ${Math.round(ratio * 100)}%.`,
       "Answers showed basic structure in mock flow.",
-      "Replace with live Gemini scoring in production.",
+      "Replace with live Mistral scoring in production.",
     ],
     strengths: ["Clear verbal delivery", "Engaged with questions"],
     improvement_tips: [
@@ -135,43 +134,68 @@ export function demoScoring(segments: TranscriptSegment[]): ScoringResult {
   });
 }
 
-function responseText(result: { text?: string; candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }> }): string {
-  if (typeof result.text === "string" && result.text.trim()) return result.text;
-  const parts = result.candidates?.[0]?.content?.parts ?? [];
-  const joined = parts.map((p) => p.text ?? "").join("");
-  if (joined.trim()) return joined;
-  throw new Error("Gemini returned empty response");
+type MistralChatResponse = {
+  choices?: Array<{ message?: { content?: string | Array<{ type?: string; text?: string }> } }>;
+  error?: { message?: string; type?: string };
+};
+
+function messageContent(content: MistralChatResponse["choices"]): string {
+  const raw = content?.[0]?.message?.content;
+  if (typeof raw === "string") return raw;
+  if (Array.isArray(raw)) {
+    return raw.map((p) => (typeof p === "string" ? p : p.text ?? "")).join("");
+  }
+  return "";
 }
 
-async function callGemini(prompt: string, model: string): Promise<string> {
-  const ai = new GoogleGenAI({ apiKey: env.geminiApiKey });
-  const result = await ai.models.generateContent({
-    model,
-    contents: prompt,
-    config: {
-      temperature: 0.2,
-      responseMimeType: "application/json",
+async function callMistral(prompt: string, model: string): Promise<string> {
+  const res = await fetch("https://api.mistral.ai/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${env.mistralApiKey}`,
     },
+    body: JSON.stringify({
+      model,
+      temperature: 0.2,
+      response_format: { type: "json_object" },
+      messages: [
+        {
+          role: "system",
+          content: "You are a scoring API. Always respond with a single valid JSON object.",
+        },
+        { role: "user", content: prompt },
+      ],
+    }),
   });
-  return responseText(result);
+
+  const body = (await res.json()) as MistralChatResponse & { message?: string };
+  if (!res.ok) {
+    const errMsg =
+      body.error?.message || body.message || JSON.stringify(body).slice(0, 400);
+    throw new Error(`Mistral HTTP ${res.status}: ${errMsg}`);
+  }
+
+  const text = messageContent(body.choices).trim();
+  if (!text) throw new Error("Mistral returned empty response");
+  return text;
 }
 
-async function callGeminiWithFallback(prompt: string): Promise<{ text: string; model: string }> {
+async function callMistralWithFallback(prompt: string): Promise<{ text: string; model: string }> {
   const errors: string[] = [];
   for (const model of MODEL_CANDIDATES) {
     try {
-      const text = await callGemini(prompt, model);
+      const text = await callMistral(prompt, model);
       return { text, model };
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       errors.push(`${model}: ${msg}`);
-      log(undefined, "gemini_model_failed", { model, error: msg.slice(0, 400) });
-      // Try next model on not-found / unsupported; keep trying on 429 too in case another tier works
+      log(undefined, "mistral_model_failed", { model, error: msg.slice(0, 400) });
       continue;
     }
   }
   throw new Error(
-    `Gemini scoring failed for models [${MODEL_CANDIDATES.join(", ")}]. ${errors.join(" | ")}`,
+    `Mistral scoring failed for models [${MODEL_CANDIDATES.join(", ")}]. ${errors.join(" | ")}`,
   );
 }
 
@@ -180,14 +204,14 @@ export async function scoreTranscript(
   segments: TranscriptSegment[],
   meta?: { interviewerName?: string; candidateLabel?: string },
 ): Promise<ScoringResult> {
-  if (env.demoMode || !env.geminiApiKey) {
+  if (env.demoMode || !env.mistralApiKey) {
     log(sessionId, "scoring_demo_mode");
     return demoScoring(segments);
   }
 
   const prompt = buildScoringPrompt(segments, meta);
   try {
-    const { text: raw, model } = await callGeminiWithFallback(prompt);
+    const { text: raw, model } = await callMistralWithFallback(prompt);
     const parsed = ScoringResultSchema.parse(extractJson(raw));
     log(sessionId, "scoring_ok", { overall: parsed.overall_score, model });
     return parsed;
@@ -198,22 +222,23 @@ export async function scoreTranscript(
 
 Your previous answer was invalid. Reply with ONLY the JSON object matching the schema.`;
     try {
-      const { text: raw2, model } = await callGeminiWithFallback(repairPrompt);
+      const { text: raw2, model } = await callMistralWithFallback(repairPrompt);
       const parsed = ScoringResultSchema.parse(extractJson(raw2));
       log(sessionId, "scoring_ok_repair", { overall: parsed.overall_score, model });
       return parsed;
     } catch (secondErr) {
       const msg2 = secondErr instanceof Error ? secondErr.message : String(secondErr);
-      // Only fall back to heuristic demo when explicitly allowed — otherwise surface the Gemini error
       if (env.scoringFallbackDemo) {
         log(sessionId, "scoring_failed_fallback_demo", { error: msg2.slice(0, 500) });
         return demoScoring(segments);
       }
       log(sessionId, "scoring_failed", { error: msg2.slice(0, 800) });
       throw new Error(
-        /429|quota|rate limit|RESOURCE_EXHAUSTED/i.test(msg2)
-          ? `Gemini quota exhausted (model ${env.geminiModel}). Create an AI Studio key with Generate Content quota, or set SCORING_FALLBACK_DEMO=true. ${msg2.slice(0, 240)}`
-          : `Gemini scoring failed: ${msg2.slice(0, 400)}`,
+        /401|403|invalid.?api.?key|unauthorized/i.test(msg2)
+          ? `Mistral auth failed. Check MISTRAL_API_KEY. ${msg2.slice(0, 240)}`
+          : /429|rate.?limit|quota/i.test(msg2)
+            ? `Mistral rate limited (model ${env.mistralModel}). Retry later or set SCORING_FALLBACK_DEMO=true. ${msg2.slice(0, 240)}`
+            : `Mistral scoring failed: ${msg2.slice(0, 400)}`,
       );
     }
   }
