@@ -5,6 +5,7 @@ import { useAuth } from "../lib/auth";
 import { SUB_SCORE_LABELS } from "@artemis/shared";
 import { Link } from "react-router-dom";
 import { ScoreBar } from "../components/ScoreBar";
+import { PARAM_COLORS } from "../lib/rubricColors";
 
 function scoreColor(n: number) {
   if (n >= 80) return "text-score-high";
@@ -100,6 +101,7 @@ export function SessionsPage() {
                         key={k}
                         label={SUB_SCORE_LABELS[k]}
                         value={s.scoring!.sub_scores[k]}
+                        color={PARAM_COLORS[k]}
                         compact
                       />
                     ))}

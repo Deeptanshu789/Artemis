@@ -41,9 +41,10 @@
 
 ## Charts
 
-- Recharts line: overall score over time per interviewer
-- Stroke `--accent`, grid `--border`, no glow
-- Max height 280px under list or on Trends page
+- Trends: stacked bar per interviewee; each stack segment = rubric sub-score
+  (teal → blue → lavender → peach → coral → red). Dark `#141a22` plane, dashed
+  baseline, no glow, gaps between bars. Legend lists assessment parameters.
+- Max height ~420px on Trends page
 
 ## Spacing
 
