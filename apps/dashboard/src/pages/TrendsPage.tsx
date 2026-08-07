@@ -19,6 +19,7 @@ import { listSessions } from "../lib/api";
 import { useAuth } from "../lib/auth";
 import { PARAM_COLORS } from "../lib/rubricColors";
 import { participantColor } from "../lib/participantColors";
+import { ParamTrendChart } from "../components/ParamTrendChart";
 
 const PARAM_KEYS = Object.keys(SUB_SCORE_LABELS) as (keyof SubScores)[];
 const METRIC_LABELS = PARAM_KEYS.map((k) => SUB_SCORE_LABELS[k]);
@@ -92,6 +93,17 @@ function uniqueSeriesLabel(base: string, date: string, used: Map<string, number>
   return withDate.length > 28 ? `${withDate.slice(0, 26)}…` : withDate;
 }
 
+/** Build rolling average for a list of numeric values (cumulative mean) */
+function rollingAvg(values: number[]): number[] {
+  const avgs: number[] = [];
+  let sum = 0;
+  for (let i = 0; i < values.length; i++) {
+    sum += values[i]!;
+    avgs.push(sum / (i + 1));
+  }
+  return avgs;
+}
+
 export function TrendsPage() {
   const { user } = useAuth();
   const [mine, setMine] = useState<Session[]>([]);
@@ -128,12 +140,12 @@ export function TrendsPage() {
         date,
         overall: s.scoring!.overall_score,
         color: participantColor(i),
-        problem_solving: sub.problem_solving,
-        communication: sub.communication,
-        structure: sub.structure,
-        depth: sub.depth,
-        collaboration: sub.collaboration,
-        professionalism: sub.professionalism,
+        problem_solving: Number.isFinite(sub.problem_solving) ? sub.problem_solving : 0,
+        communication: Number.isFinite(sub.communication) ? sub.communication : 0,
+        structure: Number.isFinite(sub.structure) ? sub.structure : 0,
+        depth: Number.isFinite(sub.depth) ? sub.depth : 0,
+        collaboration: Number.isFinite(sub.collaboration) ? sub.collaboration : 0,
+        professionalism: Number.isFinite(sub.professionalism) ? sub.professionalism : 0,
       };
     });
   }, [mine]);
@@ -158,6 +170,47 @@ export function TrendsPage() {
         })),
     [chartMine, selectedIds],
   );
+
+  /**
+   * Build per-parameter trend data for the 6 line charts.
+   * Each point: { label: session short-name, value: score, avg: cumulative avg }
+   */
+  const paramTrendData = useMemo(() => {
+    return PARAM_KEYS.reduce(
+      (acc, key) => {
+        const values = chartMine.map((r) => r[key] as number);
+        const avgs = rollingAvg(values);
+        acc[key] = chartMine.map((r, i) => ({
+          label:
+            r.tick ||
+            new Date(mine.find((s) => s.id === r.key)?.started_at ?? "")
+              .toLocaleDateString("en", { month: "short", day: "numeric" }),
+          value: Math.round(r[key] as number),
+          avg: Math.round(avgs[i]!),
+        }));
+        return acc;
+      },
+      {} as Record<keyof SubScores, Array<{ label: string; value: number; avg: number }>>,
+    );
+  }, [chartMine, mine]);
+
+  /** Δ% from first session to last for each param */
+  const paramDeltas = useMemo(() => {
+    return PARAM_KEYS.reduce(
+      (acc, key) => {
+        const vals = chartMine.map((r) => r[key] as number);
+        if (vals.length < 2) {
+          acc[key] = null;
+        } else {
+          const first = vals[0]!;
+          const last = vals[vals.length - 1]!;
+          acc[key] = first === 0 ? null : ((last - first) / first) * 100;
+        }
+        return acc;
+      },
+      {} as Record<keyof SubScores, number | null>,
+    );
+  }, [chartMine]);
 
   function toggleInterviewee(id: string) {
     setSelectedIds((prev) =>
@@ -331,6 +384,41 @@ export function TrendsPage() {
           </div>
         </section>
       )}
+
+      {/* ── 6 per-parameter trend line charts ── */}
+      <section>
+        <div style={{ marginBottom: 6 }}>
+          <h2 className="text-sm font-semibold mb-1">Parameter trends over time</h2>
+          <p className="text-muted text-xs mb-6">
+            Each parameter tracked individually — solid line = actual score, dashed line = cumulative average
+          </p>
+        </div>
+
+        {chartMine.length === 0 ? (
+          <p className="text-muted text-sm">
+            No scored sessions yet — run a session to see individual parameter trends.
+          </p>
+        ) : (
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fill, minmax(340px, 1fr))",
+              gap: 20,
+            }}
+          >
+            {PARAM_KEYS.map((key) => (
+              <ParamTrendChart
+                key={key}
+                title={SUB_SCORE_LABELS[key]}
+                paramKey={key}
+                color={PARAM_COLORS[key]}
+                data={paramTrendData[key] ?? []}
+                delta={paramDeltas[key] ?? null}
+              />
+            ))}
+          </div>
+        )}
+      </section>
     </div>
   );
 }
