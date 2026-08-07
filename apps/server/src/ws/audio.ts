@@ -122,23 +122,33 @@ export function attachAudioWs(server: Server): WebSocketServer {
             });
           }
 
-          const dg = new DeepgramSession(msg.sessionId, (segment) => {
-            send(ws, { type: "transcript", sessionId: msg.sessionId, segment });
-            scheduleTranscriptPersist(msg.sessionId);
-            const fresh = getMemorySession(msg.sessionId);
-            if (fresh) {
-              const nudge = maybeTalkRatioNudge(msg.sessionId, fresh.transcript);
-              if (nudge) {
-                send(ws, {
-                  type: "nudge",
-                  sessionId: msg.sessionId,
-                  kind: "talk_ratio",
-                  interviewerShare: nudge.interviewerShare,
-                  message: nudge.message,
-                });
+          const dg = new DeepgramSession(
+            msg.sessionId,
+            (segment) => {
+              send(ws, { type: "transcript", sessionId: msg.sessionId, segment });
+              scheduleTranscriptPersist(msg.sessionId);
+              const fresh = getMemorySession(msg.sessionId);
+              if (fresh) {
+                const nudge = maybeTalkRatioNudge(msg.sessionId, fresh.transcript);
+                if (nudge) {
+                  send(ws, {
+                    type: "nudge",
+                    sessionId: msg.sessionId,
+                    kind: "talk_ratio",
+                    interviewerShare: nudge.interviewerShare,
+                    message: nudge.message,
+                  });
+                }
               }
-            }
-          });
+            },
+            (message) => {
+              send(ws, {
+                type: "error",
+                sessionId: msg.sessionId,
+                message: `Deepgram: ${message}`,
+              });
+            },
+          );
           registerDeepgram(msg.sessionId, dg);
           dg.start({
             encoding: msg.encoding ?? "linear16",

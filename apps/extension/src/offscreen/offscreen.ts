@@ -6,6 +6,8 @@ let audioCtx: AudioContext | null = null;
 let processor: ScriptProcessorNode | null = null;
 let mute: GainNode | null = null;
 
+const TARGET_RATE = 16000;
+
 chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
   (async () => {
     if (msg?.type !== "offscreen") return;
@@ -21,6 +23,22 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
   })();
   return true;
 });
+
+function downsampleTo16k(input: Float32Array, inRate: number): Float32Array {
+  if (!inRate || inRate === TARGET_RATE) return input;
+  const ratio = inRate / TARGET_RATE;
+  const outLen = Math.max(1, Math.floor(input.length / ratio));
+  const out = new Float32Array(outLen);
+  for (let i = 0; i < outLen; i++) {
+    // Linear interpolate between neighboring samples
+    const src = i * ratio;
+    const i0 = Math.floor(src);
+    const i1 = Math.min(i0 + 1, input.length - 1);
+    const t = src - i0;
+    out[i] = input[i0]! * (1 - t) + input[i1]! * t;
+  }
+  return out;
+}
 
 function floatTo16BitPCM(input: Float32Array): ArrayBuffer {
   const buffer = new ArrayBuffer(input.length * 2);
@@ -55,8 +73,8 @@ async function start(streamId: string) {
     video: false,
   });
 
-  // Prefer 16kHz for Deepgram linear16; browser may ignore and we still downsample lightly via context.
-  audioCtx = new AudioContext({ sampleRate: 16000 });
+  // Browser often ignores requested rate — always resample to 16k for Deepgram.
+  audioCtx = new AudioContext({ sampleRate: TARGET_RATE });
   const source = audioCtx.createMediaStreamSource(stream);
 
   // Keep Meet audio audible for interviewer
@@ -67,12 +85,14 @@ async function start(streamId: string) {
   mute.gain.value = 0;
   processor.onaudioprocess = (ev) => {
     const input = ev.inputBuffer.getChannelData(0);
-    const pcm = floatTo16BitPCM(input);
+    const rate = audioCtx?.sampleRate ?? TARGET_RATE;
+    const mono16k = downsampleTo16k(input, rate);
+    const pcm = floatTo16BitPCM(mono16k);
     chrome.runtime.sendMessage({
       type: "audio-chunk",
       base64: abToBase64(pcm),
       encoding: "linear16",
-      sampleRate: audioCtx?.sampleRate ?? 16000,
+      sampleRate: TARGET_RATE,
     });
   };
   source.connect(processor);

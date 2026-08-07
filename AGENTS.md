@@ -60,6 +60,13 @@ npm run verify            # health + fixture smoke
 
 ## Change Log
 
+### 2026-08-07 — Fix Deepgram live transcription
+
+- Root cause of live STT failure: API process could not resolve `api.deepgram.com` (DNS/`fetch failed` / Deepgram `ErrorEvent`), so live WS never opened.
+- Hardened `deepgram.ts`: queue PCM until Open, KeepAlive every 5s, clearer error serialization, flush via `finalize`+`CloseStream`, surface errors on client WS.
+- Offscreen capture always downsamples to 16 kHz mono linear16 (browsers ignore requested AudioContext rate).
+- Rebuild extension `dist`; run API outside restricted network sandbox so Deepgram/Mistral/Supabase resolve.
+
 ### 2026-08-06 — Bootstrap MVP (prior session)
 
 - Greenfield monorepo: extension, server, dashboard, shared, design stubs, docs.
