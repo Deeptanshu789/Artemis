@@ -27,12 +27,12 @@ const METRIC_LABELS = PARAM_KEYS.map((k) => SUB_SCORE_LABELS[k]);
 const radarTheme = createTheme({
   palette: {
     mode: "dark",
-    text: { primary: "#e8eef4", secondary: "#8b9aab" },
-    background: { default: "#141a22", paper: "#141a22" },
-    divider: "#2e3d4f",
+    text: { primary: "#fafafa", secondary: "#71717a" },
+    background: { default: "#121214", paper: "#1c1c1f" },
+    divider: "#27272a",
   },
   typography: {
-    fontFamily: '"IBM Plex Sans", system-ui, sans-serif',
+    fontFamily: '"Inter", system-ui, sans-serif',
     fontSize: 12,
   },
 });
@@ -56,7 +56,7 @@ function CustomTooltip({
   if (!active || !payload?.length) return null;
   const row = payload[0]!.payload;
   return (
-    <div className="border border-border bg-bg px-3 py-2 text-xs shadow-none min-w-[180px]">
+    <div className="border border-border bg-surface-2 px-3 py-2 text-xs rounded-lg shadow-xl min-w-[180px]">
       <p className="font-medium text-text truncate max-w-[220px]">{row.name}</p>
       <p className="text-muted mt-0.5">{row.date}</p>
       <p className="font-mono text-text mt-2">Overall {Math.round(row.overall)}</p>
@@ -221,24 +221,26 @@ export function TrendsPage() {
   if (error) return <p className="text-danger">{error}</p>;
 
   return (
-    <div className="space-y-10">
+    <div className="space-y-8">
       <div>
-        <h1 className="font-display text-3xl mb-2">Trends</h1>
-        <p className="text-muted text-sm">
+        <h1 className="text-xl font-semibold text-text">Trends</h1>
+        <p className="text-sm text-muted mt-0.5">
           Click interviewees to show on the radar — multi-select overlaps by color
         </p>
       </div>
 
       <section>
-        <h2 className="text-sm font-semibold mb-4">Parameter radar</h2>
+        <h2 className="text-sm font-semibold text-text mb-4">Parameter radar</h2>
         {chartMine.length === 0 ? (
+          <div className="bg-surface border border-border rounded-xl p-8 text-center">
           <p className="text-muted text-sm">
             No scored sessions yet. Sign in on the extension with this account, run a Meet capture,
             then refresh.
           </p>
+          </div>
         ) : (
-          <div className="space-y-4">
-            <div className="relative bg-[#141a22] px-2 py-4 sm:px-4">
+          <div className="bg-surface border border-border rounded-xl overflow-hidden">
+            <div className="relative bg-surface-2 px-2 py-4 sm:px-4">
               <ThemeProvider theme={radarTheme}>
                 <RadarChart
                   height={360}
@@ -277,7 +279,7 @@ export function TrendsPage() {
                 </p>
               )}
             </div>
-            <div className="flex flex-wrap items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2 p-4 border-t border-border">
               <button
                 type="button"
                 className="text-xs text-muted hover:text-text border border-border px-2 py-1 rounded-[4px]"
@@ -322,12 +324,12 @@ export function TrendsPage() {
 
       {chartMine.length > 0 && (
         <section>
-          <h2 className="text-sm font-semibold mb-4">Score mix over time</h2>
+          <h2 className="text-sm font-semibold text-text mb-4">Score mix over time</h2>
           <p className="text-muted text-xs mb-4">
             Stacked rubric parameters per interview (same parameter colors as Sessions)
           </p>
-          <div className="space-y-5">
-            <div className="h-[min(42vh,320px)] min-h-[240px] bg-[#141a22] px-2 pt-6 pb-2 sm:px-4">
+          <div className="bg-surface border border-border rounded-xl overflow-hidden">
+            <div className="h-[min(42vh,320px)] min-h-[240px] bg-surface-2 px-2 pt-6 pb-2 sm:px-4">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart
                   data={chartMine}
@@ -387,9 +389,9 @@ export function TrendsPage() {
 
       {/* ── 6 per-parameter trend line charts ── */}
       <section>
-        <div style={{ marginBottom: 6 }}>
-          <h2 className="text-sm font-semibold mb-1">Parameter trends over time</h2>
-          <p className="text-muted text-xs mb-6">
+        <div className="mb-4">
+          <h2 className="text-sm font-semibold text-text mb-1">Parameter trends over time</h2>
+          <p className="text-muted text-xs">
             Each parameter tracked individually — solid line = actual score, dashed line = cumulative average
           </p>
         </div>

@@ -1,26 +1,28 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap");
 @import "tailwindcss";
 
 @theme {
-  --color-bg: #0f1419;
-  --color-surface: #1a222c;
-  --color-surface-2: #243040;
-  --color-border: #2e3d4f;
-  --color-text: #e8eef4;
-  --color-muted: #8b9aab;
-  --color-accent: #3d9a7a;
+  --color-bg:         #09090b;
+  --color-surface:    #121214;
+  --color-surface-2:  #1c1c1f;
+  --color-border:     #27272a;
+  --color-text:       #fafafa;
+  --color-muted:      #71717a;
+  --color-muted-2:    #52525b;
+  --color-accent:     #3d9a7a;
   --color-accent-dim: #2a6b55;
+  --color-accent-fg:  #d1fae5;
   --color-score-high: #3d9a7a;
-  --color-score-mid: #c4a035;
-  --color-score-low: #c45c4a;
-  --color-danger: #c45c4a;
-  --font-display: "Fraunces", Georgia, serif;
-  --font-sans: "IBM Plex Sans", system-ui, sans-serif;
-  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+  --color-score-mid:  #c4a035;
+  --color-score-low:  #c45c4a;
+  --color-danger:     #ef4444;
+  --color-danger-dim: #7f1d1d;
+  --font-display: "Inter", system-ui, sans-serif;
+  --font-sans:    "Inter", system-ui, sans-serif;
+  --font-mono:    "IBM Plex Mono", ui-monospace, monospace;
 }
 
-html,
-body,
-#root {
+html, body, #root {
   height: 100%;
 }
 
@@ -29,4 +31,11 @@ body {
   background: var(--color-bg);
   color: var(--color-text);
   font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
 }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: 99px; }
+::-webkit-scrollbar-thumb:hover { background: var(--color-muted-2); }

@@ -14,42 +14,33 @@ export function ScoreBar({
   compact?: boolean;
 }) {
   const fill = color ?? "var(--color-accent)";
+  const pct = Math.max(0, Math.min(100, value));
   return (
-    <div className={compact ? "flex items-center gap-2 text-[10px]" : "flex items-center gap-3 text-sm"}>
+    <div className={`flex items-center gap-2 ${compact ? "text-[10px]" : "text-sm"}`}>
       <span className={`text-muted truncate ${compact ? "w-24" : "w-44"}`}>{label}</span>
-      <div className="flex-1 h-1.5 bg-surface-2 rounded-[2px] overflow-hidden">
+      <div className="flex-1 h-1 bg-surface-2 rounded-full overflow-hidden">
         <div
-          className="h-full rounded-[2px]"
-          style={{
-            width: `${Math.max(0, Math.min(100, value))}%`,
-            background: fill,
-          }}
+          className="h-full rounded-full transition-all duration-500"
+          style={{ width: `${pct}%`, background: fill }}
         />
       </div>
-      <span className="font-mono text-muted w-8 text-right">{Math.round(value)}</span>
+      <span className="font-mono text-muted w-7 text-right">{Math.round(value)}</span>
     </div>
   );
 }
 
-export function Scorecard({
-  overall,
-  sub,
-}: {
-  overall: number;
-  sub: SubScores;
-}) {
+export function Scorecard({ overall, sub }: { overall: number; sub: SubScores }) {
+  const color = overall >= 80 ? "text-score-high" : overall >= 60 ? "text-score-mid" : "text-score-low";
   return (
     <div>
-      <div className="font-display text-6xl">{Math.round(overall)}</div>
-      <p className="text-muted text-sm mt-1">Overall interviewee score</p>
-      <div className="mt-6 space-y-2">
+      <div className="flex items-end gap-3 mb-1">
+        <span className={`font-mono text-6xl font-bold leading-none ${color}`}>{Math.round(overall)}</span>
+        <span className="text-muted text-sm mb-1">/100</span>
+      </div>
+      <p className="text-muted text-xs mb-5">Overall interviewee score</p>
+      <div className="space-y-2.5">
         {(Object.keys(SUB_SCORE_LABELS) as (keyof SubScores)[]).map((k) => (
-          <ScoreBar
-            key={k}
-            label={SUB_SCORE_LABELS[k]}
-            value={sub[k]}
-            color={PARAM_COLORS[k]}
-          />
+          <ScoreBar key={k} label={SUB_SCORE_LABELS[k]} value={sub[k]} color={PARAM_COLORS[k]} />
         ))}
       </div>
     </div>
