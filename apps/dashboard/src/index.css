@@ -1,6 +1,20 @@
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap");
 @import "tailwindcss";
 
+@font-face {
+  font-family: 'Star Jedi';
+  src: url('/fonts/StarJedi.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Chernobyl';
+  src: url('/fonts/Chernobyl.otf') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+}
+
 @theme {
   --color-bg:         #09090b;
   --color-surface:    #121214;
@@ -17,8 +31,8 @@
   --color-score-low:  #c45c4a;
   --color-danger:     #ef4444;
   --color-danger-dim: #7f1d1d;
-  --font-display: "Inter", system-ui, sans-serif;
-  --font-sans:    "Inter", system-ui, sans-serif;
+  --font-display: "Chernobyl", system-ui, sans-serif;
+  --font-sans:    "Star Jedi", system-ui, sans-serif;
   --font-mono:    "IBM Plex Mono", ui-monospace, monospace;
 }
 
@@ -31,7 +45,13 @@ body {
   background: var(--color-bg);
   color: var(--color-text);
   font-family: var(--font-sans);
+  text-transform: lowercase;
   -webkit-font-smoothing: antialiased;
+}
+
+b, strong, h1, h2, h3, h4, h5, h6, .font-bold, .font-semibold, [class*="font-semibold"], [class*="font-bold"] {
+  font-family: var(--font-display) !important;
+  text-transform: uppercase !important;
 }
 
 /* Scrollbar */
