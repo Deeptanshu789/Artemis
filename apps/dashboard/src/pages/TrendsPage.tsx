@@ -21,7 +21,7 @@ import { PARAM_COLORS } from "../lib/rubricColors";
 import { participantColor } from "../lib/participantColors";
 import { ParamTrendChart } from "../components/ParamTrendChart";
 
-const PARAM_KEYS = Object.keys(SUB_SCORE_LABELS) as (keyof SubScores)[];
+const PARAM_KEYS = Object.keys(SUB_SCORE_LABELS) as Extract<keyof SubScores, string>[];
 const METRIC_LABELS = PARAM_KEYS.map((k) => SUB_SCORE_LABELS[k]);
 
 const radarTheme = createTheme({
