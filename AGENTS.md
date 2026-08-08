@@ -166,3 +166,9 @@ npm run verify            # health + fixture smoke
 - Wired the extension service worker to forward `candidateLabel` through the WebSocket `start` message.
 - Passed `candidateLabel` through the API `POST /sessions` to Drizzle/Supabase.
 - Updated the React dashboard (Sessions list and Session detail views) to prominently display the candidate's real name instead of the generic "Interviewee" string.
+
+### 2026-08-08 — Extracted standalone backend
+
+- Split `apps/server` and `@artemis/shared` into a separate standalone repository at `backend-standalone/` to allow for distinct deployments (e.g., Render/Railway) while the dashboard deploys to Vercel.
+- Prepared `backend-standalone/package.json` and added a `vercel.json` config (even though Vercel Serverless doesn't support WebSockets well).
+- Kept the monorepo intact for local development.

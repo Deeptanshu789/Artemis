@@ -13,3 +13,4 @@ packages/shared/dist/
 *.pem
 .vite/
 coverage/
+backend-standalone/

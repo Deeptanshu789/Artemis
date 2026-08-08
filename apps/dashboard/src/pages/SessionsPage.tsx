@@ -137,7 +137,7 @@ export function SessionsPage() {
                 {/* Score bars */}
                 {s.scoring && (
                   <div className="space-y-1.5 pt-3 border-t border-border">
-                    {(Object.keys(SUB_SCORE_LABELS) as Extract<keyof typeof SUB_SCORE_LABELS, string>[]).map((k) => (
+                    {(Object.keys(SUB_SCORE_LABELS) as (keyof typeof SUB_SCORE_LABELS)[]).map((k) => (
                       <ScoreBar
                         key={k}
                         label={SUB_SCORE_LABELS[k]}
