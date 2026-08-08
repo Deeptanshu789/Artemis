@@ -26,10 +26,10 @@
   font-style: italic;
 }
 
-/* ── Star Jedi — headings / bold / capitalized ── */
+/* ── Lost Saloon — headings / bold / capitalized ── */
 @font-face {
-  font-family: 'Star Jedi';
-  src: url('/fonts/StarJedi.ttf') format('truetype');
+  font-family: 'Lost Saloon';
+  src: url('/fonts/LostSaloon.ttf') format('truetype');
   font-weight: 400 700;
   font-style: normal;
 }
@@ -50,8 +50,8 @@
   --color-score-low:  #c45c4a;
   --color-danger:     #ef4444;
   --color-danger-dim: #7f1d1d;
-  /* Star Jedi = display/bold/headings; Elegant Typewriter = body/normal */
-  --font-display: 'Star Jedi', system-ui, sans-serif;
+  /* Lost Saloon = display/bold/headings; Elegant Typewriter = body/normal */
+  --font-display: 'Lost Saloon', system-ui, sans-serif;
   --font-sans:    'Elegant Typewriter', system-ui, sans-serif;
   --font-mono:    'Elegant Typewriter', ui-monospace, monospace;
 }
@@ -73,7 +73,7 @@ b, strong,
 h1, h2, h3, h4, h5, h6,
 .font-bold, .font-semibold,
 [class*="font-semibold"], [class*="font-bold"] {
-  font-family: var(--font-display) !important;  /* Star Jedi */
+  font-family: var(--font-display) !important;  /* Lost Saloon */
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
