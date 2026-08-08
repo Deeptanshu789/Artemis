@@ -1,0 +1,67 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: ["**"]
+
+jobs:
+  build-and-test:
+    name: Build & Test
+    runs-on: ubuntu-latest
+
+    env:
+      # Run in demo mode so no real API keys are needed in CI
+      DEMO_MODE: "true"
+      NODE_ENV: "test"
+      # Dummy values to satisfy env validation without real secrets
+      DEEPGRAM_API_KEY: "ci-placeholder"
+      MISTRAL_API_KEY: "ci-placeholder"
+      MISTRAL_MODEL: "mistral-small-latest"
+      SUPABASE_URL: "https://placeholder.supabase.co"
+      SUPABASE_ANON_KEY: "ci-placeholder"
+      SUPABASE_SERVICE_ROLE_KEY: "ci-placeholder"
+      DATABASE_URL: "postgresql://postgres:placeholder@localhost:5432/postgres"
+      PORT: "3001"
+      CORS_ORIGIN: "http://localhost:5173"
+      DASHBOARD_URL: "http://localhost:5173"
+      ADMIN_TOKEN: "ci-placeholder"
+      VITE_API_BASE: "http://localhost:3001"
+      VITE_SUPABASE_URL: "https://placeholder.supabase.co"
+      VITE_SUPABASE_ANON_KEY: "ci-placeholder"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build shared package
+        run: npm run build:shared
+
+      - name: Run unit tests
+        run: npm run test
+
+      - name: Build server
+        run: npm run build:server
+
+      - name: Build dashboard
+        run: npm run build:dashboard
+
+      - name: Build extension
+        run: npm run build:extension
+
+      - name: Upload extension dist
+        uses: actions/upload-artifact@v4
+        with:
+          name: artemis-extension
+          path: apps/extension/dist/
+          retention-days: 7

@@ -175,9 +175,8 @@ export class DeepgramSession {
   private sendRaw(buffer: Buffer): void {
     if (!this.connection) return;
     try {
-      // Pass a clean Uint8Array — SharedArrayBuffer views break some WS stacks
-      const bytes = new Uint8Array(buffer.buffer, buffer.byteOffset, buffer.byteLength);
-      this.connection.send(bytes);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (this.connection as any).send(buffer);
     } catch (err) {
       log(this.sessionId, "deepgram_send_error", { error: formatDgError(err) });
     }

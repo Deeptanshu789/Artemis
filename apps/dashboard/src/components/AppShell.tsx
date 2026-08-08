@@ -61,11 +61,11 @@ export function AppShell() {
         <div className="px-3 py-4 border-t border-border space-y-1">
           <div className="flex items-center gap-2.5 px-3 py-2 rounded-lg bg-surface-2">
             <div className="size-7 rounded-full bg-accent/20 text-accent flex items-center justify-center text-xs font-semibold shrink-0">
-              {(user?.name ?? user?.email ?? "U")[0]?.toUpperCase()}
+              {(user?.name ?? "U")[0]?.toUpperCase()}
             </div>
             <div className="min-w-0 flex-1">
               <p className="text-xs font-medium text-text truncate">{user?.name ?? "Interviewer"}</p>
-              <p className="text-[10px] text-muted truncate">{user?.email ?? ""}</p>
+              <p className="text-[10px] text-muted truncate">{user?.isGuest ? "Guest" : "Signed in"}</p>
             </div>
           </div>
           <button
