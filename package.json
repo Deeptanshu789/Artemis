@@ -22,10 +22,17 @@
     "demo:fixture": "npm run demo:fixture -w @artemis/server",
     "check-env": "npm run check-env -w @artemis/server",
     "test": "npm run test -w @artemis/server",
-    "verify": "bash scripts/verify.sh"
+    "verify": "bash scripts/verify.sh",
+    "prepare": "husky"
   },
   "engines": {
     "node": ">=20"
   },
-  "license": "MIT"
+  "license": "MIT",
+  "devDependencies": {
+    "@playwright/test": "^1.62.1",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.4.0",
+    "prettier": "^3.9.6"
+  }
 }
