@@ -32,9 +32,11 @@ export function SessionDetailPage() {
       </Link>
       <div className="mt-4 grid lg:grid-cols-[3fr_2fr] gap-8">
         <section>
-          <h1 className="font-display text-3xl mb-2">Transcript</h1>
+          <h1 className="font-display text-3xl mb-2">
+            {session.candidate_label ?? "Interviewee"}
+          </h1>
           <p className="text-xs text-muted mb-4">
-            <span className="text-accent">Interviewee</span>
+            <span className="text-accent">{session.candidate_label ?? "Interviewee"}</span>
             {" · "}
             Host ({session.interviewer_name ?? "Meet name"})
           </p>
@@ -45,7 +47,7 @@ export function SessionDetailPage() {
               session.transcript.map((seg) => {
                 const label =
                   seg.speaker === "candidate"
-                    ? "Interviewee"
+                    ? (session.candidate_label ?? "Interviewee")
                     : seg.speaker === "interviewer"
                       ? "Host"
                       : "Unknown";

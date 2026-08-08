@@ -62,6 +62,7 @@ async function createSession(
   apiHttp: string,
   interviewerId: string,
   interviewerName: string,
+  candidateLabel?: string,
 ): Promise<{ id: string }> {
   const res = await fetch(`${apiHttp}/sessions`, {
     method: "POST",
@@ -69,7 +70,7 @@ async function createSession(
     body: JSON.stringify({
       interviewerId,
       interviewerName,
-      candidateLabel: "Interviewee",
+      candidateLabel: candidateLabel || "Interviewee",
     }),
   });
   if (!res.ok) {
@@ -134,7 +135,11 @@ function connectWs(
   });
 }
 
-async function startCapture(tabId: number, meetDisplayName?: string): Promise<void> {
+async function startCapture(
+  tabId: number,
+  meetDisplayName?: string,
+  candidateLabel?: string,
+): Promise<void> {
   try {
     const endpoints = await loadEndpoints();
     state.dashboardUrl = normalizeDashboardUrl(endpoints.dashboardUrl, endpoints.apiHttp);
@@ -154,7 +159,12 @@ async function startCapture(tabId: number, meetDisplayName?: string): Promise<vo
       interviewerName,
     });
 
-    const { id } = await createSession(endpoints.apiHttp, auth.id, interviewerName);
+    const { id } = await createSession(
+      endpoints.apiHttp,
+      auth.id,
+      interviewerName,
+      candidateLabel,
+    );
     state.sessionId = id;
     state.nudge = undefined;
     sequence = 0;
@@ -259,7 +269,11 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
         sendResponse({ state });
         return;
       }
-      await startCapture(tab.id, message.meetDisplayName as string | undefined);
+      await startCapture(
+        tab.id,
+        message.meetDisplayName as string | undefined,
+        message.candidateLabel as string | undefined,
+      );
       sendResponse({ state });
       return;
     }

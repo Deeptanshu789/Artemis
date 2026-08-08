@@ -28,6 +28,7 @@ const passwordEl = document.getElementById("password") as HTMLInputElement;
 const authError = document.getElementById("auth-error")!;
 const userLabel = document.getElementById("user-label")!;
 const meetNameEl = document.getElementById("meet-name") as HTMLInputElement;
+const intervieweeNameEl = document.getElementById("interviewee-name") as HTMLInputElement;
 const redirectHint = document.getElementById("redirect-hint");
 
 const statusText = document.getElementById("status-text")!;
@@ -61,6 +62,8 @@ async function showLoggedIn(user: AuthUser) {
   appPanel.hidden = false;
   userLabel.textContent = user.email || user.name;
   meetNameEl.value = (await getMeetDisplayName()) || "";
+  const stored = await chrome.storage.local.get("intervieweeName");
+  intervieweeNameEl.value = (stored.intervieweeName as string) || "";
   refresh();
 }
 
@@ -176,6 +179,10 @@ meetNameEl.addEventListener("change", () => {
   void setMeetDisplayName(meetNameEl.value);
 });
 
+intervieweeNameEl.addEventListener("change", () => {
+  void chrome.storage.local.set({ intervieweeName: intervieweeNameEl.value.trim() });
+});
+
 report.addEventListener("click", (ev) => {
   ev.preventDefault();
   void (async () => {
@@ -200,14 +207,19 @@ startBtn.addEventListener("click", () => {
       showLoggedOut();
       return;
     }
+    const candidateName = intervieweeNameEl.value.trim() || "Interviewee";
     await setMeetDisplayName(meetName);
     await chrome.storage.local.set({
       interviewerId: authUser.id,
       interviewerName: meetName,
+      intervieweeName: candidateName,
     });
-    chrome.runtime.sendMessage({ type: "start", meetDisplayName: meetName }, (res) => {
-      if (res?.state) render(res.state);
-    });
+    chrome.runtime.sendMessage(
+      { type: "start", meetDisplayName: meetName, candidateLabel: candidateName },
+      (res) => {
+        if (res?.state) render(res.state);
+      },
+    );
   })();
 });
 

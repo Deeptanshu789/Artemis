@@ -158,6 +158,11 @@ npm run verify            # health + fixture smoke
 - Server: security headers, multi-origin CORS (+ `chrome-extension://`), `ADMIN_TOKEN` gate on `/admin/*`, graceful SIGINT/SIGTERM, hide stack in prod, block `DEMO_MODE` when `NODE_ENV=production`.
 - Removed production auto-seed; demo seed only when `DEMO_MODE` and not prod.
 - Added `npm run db:reset` (+ `POST /admin/reset-db`) to wipe `sessions`.
-- Extension: manifest `0.2.0`, production minify build, `docs/EXTENSION.md` load-unpacked guide.
 - Ran DB reset (cleared seeded Jordan Lee rows) and `build:extension` → `apps/extension/dist`.
 
+### 2026-08-08 — Added Interviewee Name Field
+
+- Added an "Interviewee name" input to the extension popup, saved to `chrome.storage.local`.
+- Wired the extension service worker to forward `candidateLabel` through the WebSocket `start` message.
+- Passed `candidateLabel` through the API `POST /sessions` to Drizzle/Supabase.
+- Updated the React dashboard (Sessions list and Session detail views) to prominently display the candidate's real name instead of the generic "Interviewee" string.
