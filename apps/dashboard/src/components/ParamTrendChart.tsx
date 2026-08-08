@@ -1,5 +1,7 @@
 import {
   ResponsiveContainer,
+  AreaChart,
+  Area,
   LineChart,
   Line,
   XAxis,
@@ -258,11 +260,12 @@ export function ParamTrendChart({
       ) : (
         <div style={{ height: 190 }}>
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart
+            <AreaChart
               data={data}
               margin={{ top: 10, right: 14, left: -12, bottom: 4 }}
             >
               <defs>
+                {/* Glow filter for the score line */}
                 <filter id={`glow-${color.replace("#", "")}`}>
                   <feGaussianBlur stdDeviation="3" result="coloredBlur" />
                   <feMerge>
@@ -270,6 +273,15 @@ export function ParamTrendChart({
                     <feMergeNode in="SourceGraphic" />
                   </feMerge>
                 </filter>
+                {/* Gradient fill under the score line */}
+                <linearGradient
+                  id={`area-gradient-${color.replace("#", "")}`}
+                  x1="0" y1="0" x2="0" y2="1"
+                >
+                  <stop offset="0%" stopColor={color} stopOpacity={0.35} />
+                  <stop offset="55%" stopColor={color} stopOpacity={0.08} />
+                  <stop offset="100%" stopColor={color} stopOpacity={0} />
+                </linearGradient>
               </defs>
               <CartesianGrid
                 stroke="#1e2d42"
@@ -302,8 +314,8 @@ export function ParamTrendChart({
                   strokeDasharray: "4 4",
                 }}
               />
-              {/* Average dashed line — rendered first so it's behind */}
-              <Line
+              {/* Average dashed line — behind everything */}
+              <Area
                 type="linear"
                 dataKey="avg"
                 name="avg"
@@ -312,16 +324,18 @@ export function ParamTrendChart({
                 strokeDasharray="6 5"
                 dot={false}
                 activeDot={false}
+                fill="none"
                 isAnimationActive={true}
                 animationDuration={800}
               />
-              {/* Score solid line with glow effect */}
-              <Line
+              {/* Score area with gradient shadow + glow line on top */}
+              <Area
                 type="monotone"
                 dataKey="value"
                 name="value"
                 stroke={color}
                 strokeWidth={3}
+                fill={`url(#area-gradient-${color.replace("#", "")})`}
                 dot={<CustomDot stroke={color} />}
                 activeDot={{
                   r: 6,
@@ -335,7 +349,7 @@ export function ParamTrendChart({
                   filter: `drop-shadow(0 0 6px ${color}80)`,
                 }}
               />
-            </LineChart>
+            </AreaChart>
           </ResponsiveContainer>
         </div>
       )}
