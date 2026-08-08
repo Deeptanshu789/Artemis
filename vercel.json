@@ -1,0 +1,9 @@
+{
+  "buildCommand": "npm run build:shared && npm run build:dashboard",
+  "outputDirectory": "apps/dashboard/dist",
+  "installCommand": "npm install",
+  "framework": "vite",
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
+}
