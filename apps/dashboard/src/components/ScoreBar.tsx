@@ -39,7 +39,7 @@ export function Scorecard({ overall, sub }: { overall: number; sub: SubScores })
       </div>
       <p className="text-muted text-xs mb-5">Overall interviewee score</p>
       <div className="space-y-2.5">
-        {(Object.keys(SUB_SCORE_LABELS) as (keyof SubScores)[]).map((k) => (
+        {(Object.keys(SUB_SCORE_LABELS) as Extract<keyof SubScores, string>[]).map((k) => (
           <ScoreBar key={k} label={SUB_SCORE_LABELS[k]} value={sub[k]} color={PARAM_COLORS[k]} />
         ))}
       </div>
